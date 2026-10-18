@@ -14,9 +14,9 @@ import {
   Tooltip,
   useTheme,
 } from '@mui/material'
-import BusinessIcon from '@mui/icons-material/Business'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
+import UrbanVaultLogo from './UrbanVaultLogo'
 import { useAuth } from '../context/AuthContext'
 import { useColorMode } from '../context/ColorModeContext'
 
@@ -65,21 +65,24 @@ export const Navbar = () => {
         <Stack direction="row" alignItems="center" spacing={1.5}>
           <Box
             sx={{
-              width: 38,
-              height: 38,
+              width: 40,
+              height: 40,
               borderRadius: 2,
-              backgroundColor: isDark ? '#3B82F6' : '#0F172A',
+              backgroundColor: isDark ? '#1E293B' : '#0F172A',
+              border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#FFFFFF',
-              boxShadow: isDark ? '0 0 16px rgba(59, 130, 246, 0.35)' : 'none',
+              color: isDark ? '#38BDF8' : '#FFFFFF',
+              boxShadow: isDark ? '0 0 16px rgba(56, 189, 248, 0.25)' : '0 2px 8px rgba(15, 23, 42, 0.15)',
+              px: 0.75,
+              transition: 'all 0.2s ease',
             }}
           >
-            <BusinessIcon fontSize="small" />
+            <UrbanVaultLogo size={28} color={isDark ? '#38BDF8' : '#FFFFFF'} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', fontSize: '1.05rem' }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', fontSize: '1.1rem' }}>
               UrbanVault
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500, display: { xs: 'none', sm: 'block' } }}>
