@@ -3,7 +3,7 @@ from django.conf import settings
 
 
 class TicketStatus(models.TextChoices):
-    PENDING_TECHNICIAN_ASSIGNMENT = 'PENDING_TECHNICIAN_ASSIGNMENT', 'Pending Technician Assignment'
+    PENDING_TECHNICIAN_ASSIGNMENT = 'PENDING_TECHNICIAN_ASSIGNMENT', 'Pending Manager Approval'
     PENDING_TECHNICIAN_ASSESSMENT = 'PENDING_TECHNICIAN_ASSESSMENT', 'Pending Technician Assessment'
     PENDING_DEPARTMENT_REVIEW = 'PENDING_DEPARTMENT_REVIEW', 'Pending Department POC Review'
     RESOLVED = 'RESOLVED', 'Resolved'

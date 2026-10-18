@@ -347,7 +347,7 @@ export const TicketsDashboard = () => {
                 >
                   <MenuItem value="" sx={{ fontSize: '0.8125rem' }}>All Statuses</MenuItem>
                   {activeTab === 'open' ? [
-                    <MenuItem key="PTA" value="PENDING_TECHNICIAN_ASSIGNMENT" sx={{ fontSize: '0.8rem' }}>Pending Assignment</MenuItem>,
+                    <MenuItem key="PTA" value="PENDING_TECHNICIAN_ASSIGNMENT" sx={{ fontSize: '0.8rem' }}>Pending Manager Approval</MenuItem>,
                     <MenuItem key="PTASS" value="PENDING_TECHNICIAN_ASSESSMENT" sx={{ fontSize: '0.8rem' }}>Pending Assessment</MenuItem>,
                     <MenuItem key="PDR" value="PENDING_DEPARTMENT_REVIEW" sx={{ fontSize: '0.8rem' }}>Pending Review</MenuItem>,
                   ] : [
