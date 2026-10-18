@@ -8,64 +8,59 @@ Built with **React 18**, **Material UI (MUI v5)**, **Vite**, **Python 3.12**, **
 
 ## 1. Quick Start Guide (How to Run Locally)
 
-You can run the project locally in **2 simple steps** using separate terminals for Backend and Frontend.
+Follow these steps to clone and run the project from scratch.
 
 ### Prerequisites
-- **Python 3.11+** installed
-- **Node.js 18+** & **npm** installed
+- **Python 3.9+** (Supports Python 3.9, 3.10, 3.11, and 3.12)
+- **Node.js 18+** & **npm**
 
 ---
 
-### Step 1: Start the Backend (Django REST API)
+### Step 0: Clone the Repository
 
-Open a terminal at the project root:
+Open your terminal:
 
 ```bash
-# 1. Navigate to backend directory
+git clone https://github.com/PrabhanjanJois/urbanvault-ticketing_JOIS.git
+cd urbanvault-ticketing_JOIS
+```
+
+---
+
+### Step 1: Start the Backend (Terminal 1)
+
+In your terminal, navigate to `backend` and run:
+
+```bash
 cd backend
-
-# 2. Create and activate a virtual environment
 python3 -m venv .venv
-source .venv/bin/activate       # On Windows: .venv\Scripts\activate
-
-# 3. Install Python dependencies
+source .venv/bin/activate
 pip install -r requirements.txt
-
-# 4. Apply database migrations
 python manage.py migrate
-
-# 5. Seed sample personas, properties, clients, and tickets
 python manage.py seed_data
-
-# 6. Start the Django server
 python manage.py runserver 127.0.0.1:8000
 ```
 
 > [!NOTE]
-> The backend will be live at `http://127.0.0.1:8000/`.
+> The backend server will be live at `http://127.0.0.1:8000/`.
 > - API Base URL: `http://127.0.0.1:8000/api/`
 > - Django Admin: `http://127.0.0.1:8000/admin/`
 
 ---
 
-### Step 2: Start the Frontend (React + Vite)
+### Step 2: Start the Frontend (Terminal 2)
 
-Open a second terminal at the project root:
+Open a **new terminal tab or window**, navigate to `frontend`, and run:
 
 ```bash
-# 1. Navigate to frontend directory
 cd frontend
-
-# 2. Install dependencies
 npm install
-
-# 3. Launch the Vite development server
 npm run dev
 ```
 
 > [!TIP]
 > Open **[http://localhost:3000](http://localhost:3000)** in your browser. 
-> The app is pre-configured with a **1-Click Persona Switcher** in the top navigation bar so you can instantly switch roles without logging in.
+> The application includes a **1-Click Persona Switcher** in the top navigation bar to test all user roles without passwords.
 
 ---
 
