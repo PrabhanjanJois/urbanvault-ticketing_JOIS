@@ -762,21 +762,70 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
             bgcolor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
           }}
         >
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'text.primary' }}>
-              ACTIVITY {ticket.activities?.length || 0} events
-            </Typography>
+          {/* Aligned Activity Header & Tabs Bar */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2.5,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              mb: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 800,
+                  color: 'text.primary',
+                  letterSpacing: '0.04em',
+                  fontSize: '0.85rem',
+                }}
+              >
+                ACTIVITY
+              </Typography>
+              <Chip
+                label={`${ticket.activities?.length || 0} events`}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+                  color: 'text.secondary',
+                }}
+              />
+            </Box>
+
             <Tabs
               value={activityTab}
               onChange={(e, val) => setActivityTab(val)}
-              sx={{ minHeight: 32, '& .MuiTab-root': { minHeight: 32, py: 0.5, px: 1.5, fontSize: '0.75rem', fontWeight: 700 } }}
+              textColor="primary"
+              indicatorColor="primary"
+              sx={{
+                minHeight: 40,
+                '& .MuiTabs-indicator': {
+                  height: 2.5,
+                  borderRadius: '2px 2px 0 0',
+                },
+                '& .MuiTab-root': {
+                  minHeight: 40,
+                  py: 1,
+                  px: 2,
+                  fontSize: '0.825rem',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  color: 'text.secondary',
+                  '&.Mui-selected': {
+                    color: isDark ? '#60A5FA' : '#0F172A',
+                  },
+                },
+              }}
             >
               <Tab label="All Actions" value="all" />
               <Tab label="Comments" value="comments" />
             </Tabs>
-          </Stack>
-
-          <Divider sx={{ mb: 2 }} />
+          </Box>
 
           <Stack spacing={2}>
             {filteredActivities.length === 0 ? (
@@ -807,12 +856,12 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                   >
                     {act.actor_initials}
                   </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={1}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.4 }}>
                         {act.description}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', flexShrink: 0, fontWeight: 500 }}>
                         {act.created_at}
                       </Typography>
                     </Stack>

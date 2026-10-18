@@ -4,7 +4,6 @@ import {
   CardContent,
   Typography,
   Box,
-  Button,
   Chip,
   Stack,
   useTheme,
@@ -12,7 +11,6 @@ import {
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined'
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import { useColorMode } from '../context/ColorModeContext'
 
 export const getStatusBadgeConfig = (status, isDark = false) => {
@@ -187,12 +185,9 @@ export const TicketCard = ({ ticket, onView, isSelected = false }) => {
             sx={{
               pt: 1,
               borderTop: `1px dashed ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9'}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
             }}
           >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8rem', display: 'block' }}>
               Current Assignee(s):{' '}
               <strong style={{ color: isDark ? '#F1F5F9' : '#0F172A' }}>
                 {ticket.assigned_to_name
@@ -205,30 +200,6 @@ export const TicketCard = ({ ticket, onView, isSelected = false }) => {
                 </span>
               )}
             </Typography>
-
-            <Button
-              size="small"
-              variant={isSelected ? 'contained' : 'outlined'}
-              onClick={(e) => {
-                e.stopPropagation()
-                onView(ticket)
-              }}
-              endIcon={<ArrowForwardIosIcon sx={{ fontSize: '0.65rem !important' }} />}
-              sx={{
-                py: 0.25,
-                px: 1.5,
-                minHeight: 26,
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                borderRadius: 1.5,
-                ...(isSelected && {
-                  bgcolor: isDark ? '#3B82F6' : '#0F172A',
-                  color: '#FFFFFF',
-                }),
-              }}
-            >
-              View
-            </Button>
           </Box>
         </Stack>
       </CardContent>
