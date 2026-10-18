@@ -277,6 +277,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
   const canAssignWorker = ticket?.available_actions?.includes('ASSIGN_WORKER')
   const canChangeDept = ticket?.available_actions?.includes('CHANGE_DEPARTMENT')
   const canSubmitAssessment = ticket?.available_actions?.includes('SUBMIT_ASSESSMENT')
+  const isResolvedOrClosed = ticket?.status === 'RESOLVED' || ticket?.status === 'CLOSED'
 
   return (
     <Paper
@@ -389,15 +390,16 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
         )}
 
         {/* 2A. Sticky Action Required Section (Persona Driven) */}
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 2.5,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #CBD5E1',
-            bgcolor: isDark ? '#1E293B' : '#FFFFFF',
-            boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(15, 23, 42, 0.04)',
-          }}
-        >
+        {!isResolvedOrClosed && (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2.5,
+              border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #CBD5E1',
+              bgcolor: isDark ? '#1E293B' : '#FFFFFF',
+              boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(15, 23, 42, 0.04)',
+            }}
+          >
           {/* CLIENT POC CTA BANNER */}
           {isClient && (
             <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={2}>
@@ -890,6 +892,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
             </Stack>
           )}
         </Box>
+        )}
 
         {/* 2B. ISSUE DESCRIPTION */}
         <Box

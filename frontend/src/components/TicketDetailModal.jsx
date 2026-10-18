@@ -223,6 +223,7 @@ export const TicketDetailModal = ({ open, ticketId, onClose, onTicketUpdated }) 
   const canAssignWorker = ticket?.available_actions?.includes('ASSIGN_WORKER')
   const canChangeDept = ticket?.available_actions?.includes('CHANGE_DEPARTMENT')
   const canSubmitAssessment = ticket?.available_actions?.includes('SUBMIT_ASSESSMENT')
+  const isResolvedOrClosed = ticket?.status === 'RESOLVED' || ticket?.status === 'CLOSED'
 
   return (
     <Dialog
@@ -306,15 +307,16 @@ export const TicketDetailModal = ({ open, ticketId, onClose, onTicketUpdated }) 
             )}
 
             {/* Wireframe Sticky CTA Banner Section */}
-            <Box
-              sx={{
-                bgcolor: '#FFFFFF',
-                borderRadius: 2,
-                border: '1px solid #CBD5E1',
-                p: 2,
-                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
-              }}
-            >
+            {!isResolvedOrClosed && (
+              <Box
+                sx={{
+                  bgcolor: '#FFFFFF',
+                  borderRadius: 2,
+                  border: '1px solid #CBD5E1',
+                  p: 2,
+                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                }}
+              >
               {/* CLIENT POC CTA BANNER */}
               {isClient && (
                 <Stack
@@ -637,6 +639,7 @@ export const TicketDetailModal = ({ open, ticketId, onClose, onTicketUpdated }) 
                 </Stack>
               )}
             </Box>
+            )}
 
             {/* Ticket Header & Metadata */}
             <Box sx={{ bgcolor: '#FFFFFF', borderRadius: 2, p: 2.5, border: '1px solid #E2E8F0' }}>
