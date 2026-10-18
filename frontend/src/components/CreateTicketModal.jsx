@@ -18,14 +18,19 @@ import {
   Alert,
   IconButton,
   CircularProgress,
+  useTheme,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import FlashOnIcon from '@mui/icons-material/FlashOn'
 import { useAuth } from '../context/AuthContext'
+import { useColorMode } from '../context/ColorModeContext'
 import client from '../api/client'
 
 export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
+  const theme = useTheme()
   const { user } = useAuth()
+  const { mode } = useColorMode()
+  const isDark = mode === 'dark'
 
   const [auxData, setAuxData] = useState({ clients: [], departments: [], quick_issues: [] })
   const [selectedClientId, setSelectedClientId] = useState('')
@@ -142,7 +147,8 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
       PaperProps={{
         sx: {
           borderRadius: 3,
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          bgcolor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
         },
       }}
     >
@@ -151,16 +157,16 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
           component="div"
           sx={{
             p: 2.5,
-            borderBottom: '1px solid #E2E8F0',
+            borderBottom: `1px solid ${theme.palette.divider}`,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <Typography component="div" variant="h6" sx={{ fontWeight: 800, color: '#0F172A' }}>
+          <Typography component="div" variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>
             Create New Ticket
           </Typography>
-          <IconButton onClick={onClose} size="small" sx={{ color: '#64748B' }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -193,15 +199,15 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
               <Box
                 sx={{
                   p: 1.5,
-                  bgcolor: '#F8FAFC',
+                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F8FAFC',
                   borderRadius: 2,
-                  border: '1px solid #E2E8F0',
+                  border: `1px solid ${theme.palette.divider}`,
                 }}
               >
-                <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                   Client Office
                 </Typography>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
                   {currentClient.name} • {currentClient.property_name}
                 </Typography>
               </Box>
@@ -223,7 +229,17 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {selected.map((val) => (
-                        <Chip key={val} label={val} size="small" sx={{ height: 24, fontWeight: 700 }} />
+                        <Chip
+                          key={val}
+                          label={val}
+                          size="small"
+                          sx={{
+                            height: 24,
+                            fontWeight: 700,
+                            bgcolor: isDark ? '#1E293B' : '#E2E8F0',
+                            color: 'text.primary',
+                          }}
+                        />
                       ))}
                     </Box>
                   )}
@@ -234,7 +250,7 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
                     </MenuItem>
                   ))}
                 </Select>
-                <Typography variant="caption" sx={{ color: '#64748B', mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5 }}>
                   {isClient
                     ? 'Your office has multiple floors - please select where the issue is.'
                     : 'This office has multiple floors - please select where the issue is.'}
@@ -246,28 +262,40 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
             <Box>
               <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
                 <FlashOnIcon sx={{ fontSize: 16, color: '#F59E0B' }} />
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569' }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
                   Quick Issues - tap to autofill
                 </Typography>
               </Stack>
               <Stack direction="row" flexWrap="wrap" gap={1}>
-                {quickIssues.map((item, idx) => (
-                  <Chip
-                    key={idx}
-                    label={item.title}
-                    onClick={() => handleQuickIssueTap(item.title)}
-                    clickable
-                    data-testid={`quick-issue-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-                    sx={{
-                      fontWeight: 600,
-                      bgcolor: issueTitle === item.title ? '#0F172A' : '#F1F5F9',
-                      color: issueTitle === item.title ? '#FFFFFF' : '#334155',
-                      '&:hover': {
-                        bgcolor: issueTitle === item.title ? '#1E293B' : '#E2E8F0',
-                      },
-                    }}
-                  />
-                ))}
+                {quickIssues.map((item, idx) => {
+                  const isSelected = issueTitle === item.title
+                  return (
+                    <Chip
+                      key={idx}
+                      label={item.title}
+                      onClick={() => handleQuickIssueTap(item.title)}
+                      clickable
+                      data-testid={`quick-issue-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+                      sx={{
+                        fontWeight: 600,
+                        bgcolor: isSelected
+                          ? isDark ? '#3B82F6' : '#0F172A'
+                          : isDark ? 'rgba(255, 255, 255, 0.06)' : '#F1F5F9',
+                        color: isSelected
+                          ? '#FFFFFF'
+                          : 'text.primary',
+                        border: isSelected
+                          ? '1px solid transparent'
+                          : `1px solid ${theme.palette.divider}`,
+                        '&:hover': {
+                          bgcolor: isSelected
+                            ? isDark ? '#2563EB' : '#1E293B'
+                            : isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
+                        },
+                      }}
+                    />
+                  )
+                })}
               </Stack>
             </Box>
 
@@ -298,7 +326,7 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
           </Stack>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid #E2E8F0' }}>
+        <DialogActions sx={{ p: 2.5, borderTop: `1px solid ${theme.palette.divider}` }}>
           <Button onClick={onClose} disabled={submitting} sx={{ fontWeight: 600 }}>
             Cancel
           </Button>
@@ -311,8 +339,8 @@ export const CreateTicketModal = ({ open, onClose, onTicketCreated }) => {
             sx={{
               fontWeight: 700,
               px: 3,
-              bgcolor: '#0F172A',
-              '&:hover': { bgcolor: '#1E293B' },
+              bgcolor: isDark ? '#3B82F6' : '#0F172A',
+              '&:hover': { bgcolor: isDark ? '#2563EB' : '#1E293B' },
             }}
           >
             {submitting ? 'Submitting...' : 'Submit'}

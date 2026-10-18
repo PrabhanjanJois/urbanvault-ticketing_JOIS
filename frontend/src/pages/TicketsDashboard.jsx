@@ -18,22 +18,31 @@ import {
   Pagination,
   Paper,
   Chip,
+  Grid,
+  useTheme,
+  useMediaQuery,
+  Dialog,
+  DialogContent,
   IconButton,
-  Tooltip,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
-import FilterListIcon from '@mui/icons-material/FilterList'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
-import SwapVertIcon from '@mui/icons-material/SwapVert'
+import CloseIcon from '@mui/icons-material/Close'
+import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined'
 import { TicketCard } from '../components/TicketCard'
+import { TicketDetailPane } from '../components/TicketDetailPane'
 import { CreateTicketModal } from '../components/CreateTicketModal'
-import { TicketDetailModal } from '../components/TicketDetailModal'
 import { useAuth } from '../context/AuthContext'
+import { useColorMode } from '../context/ColorModeContext'
 import client from '../api/client'
 
 export const TicketsDashboard = () => {
+  const theme = useTheme()
   const { user } = useAuth()
+  const { mode } = useColorMode()
+  const isDark = mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // State
   const [activeTab, setActiveTab] = useState('open') // 'open' | 'closed'
@@ -44,21 +53,22 @@ export const TicketsDashboard = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  // Selected Ticket for Split-View
+  const [selectedTicketId, setSelectedTicketId] = useState(null)
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
+
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('')
   const [filterClient, setFilterClient] = useState('')
   const [filterDepartment, setFilterDepartment] = useState('')
-  const [filterFM, setFilterFM] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [ordering, setOrdering] = useState('-created_at')
 
   // Dropdown options
   const [auxData, setAuxData] = useState({ clients: [], departments: [], properties: [] })
 
-  // Modals
+  // Modal
   const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [detailModalOpen, setDetailModalOpen] = useState(false)
-  const [selectedTicketId, setSelectedTicketId] = useState(null)
 
   // Load auxiliary filter data
   useEffect(() => {
@@ -81,19 +91,29 @@ export const TicketsDashboard = () => {
       if (searchQuery.trim()) params.search = searchQuery.trim()
       if (filterClient) params.client = filterClient
       if (filterDepartment) params.department = filterDepartment
-      if (filterFM) params.facility_manager = filterFM
       if (filterStatus) params.status = filterStatus
 
       const res = await client.get('/ticketing/tickets/', { params })
-      setTickets(res.data.results || [])
+      const results = res.data.results || []
+      setTickets(results)
       setTotalCount(res.data.count || 0)
+
+      // Auto-select first ticket if current selected ticket is not in results
+      if (results.length > 0) {
+        setSelectedTicketId((prevId) => {
+          const exists = results.some((t) => t.id === prevId)
+          return exists ? prevId : results[0].id
+        })
+      } else {
+        setSelectedTicketId(null)
+      }
     } catch (err) {
       console.error('Error loading tickets:', err)
       setError('Could not load tickets from server. Please verify connection.')
     } finally {
       setLoading(false)
     }
-  }, [activeTab, page, ordering, searchQuery, filterClient, filterDepartment, filterFM, filterStatus])
+  }, [activeTab, page, ordering, searchQuery, filterClient, filterDepartment, filterStatus])
 
   // Trigger fetch on filter / user changes
   useEffect(() => {
@@ -110,7 +130,6 @@ export const TicketsDashboard = () => {
     setSearchQuery('')
     setFilterClient('')
     setFilterDepartment('')
-    setFilterFM('')
     setFilterStatus('')
     setOrdering('-created_at')
     setPage(1)
@@ -120,105 +139,120 @@ export const TicketsDashboard = () => {
     Boolean(searchQuery) ||
     Boolean(filterClient) ||
     Boolean(filterDepartment) ||
-    Boolean(filterFM) ||
     Boolean(filterStatus)
 
-  const handleViewTicket = (t) => {
+  const handleSelectTicket = (t) => {
     setSelectedTicketId(t.id)
-    setDetailModalOpen(true)
+    if (isMobile) {
+      setMobileDetailOpen(true)
+    }
   }
 
   const totalPages = Math.ceil(totalCount / pageSize) || 1
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Top Header Row */}
+    <Box sx={{ flex: 1, py: { xs: 2, sm: 3 }, px: { xs: 2, md: 3, lg: 4 } }}>
+      {/* Top Header Row matching Wireframe */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
         alignItems={{ xs: 'flex-start', sm: 'center' }}
         spacing={2}
-        sx={{ mb: 3 }}
+        sx={{ mb: 2.5 }}
       >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
-            Ticketing Management
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748B', mt: 0.5 }}>
-            Manage and track workspace issues across all UrbanVault locations.
-          </Typography>
-        </Box>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <ConfirmationNumberOutlinedIcon sx={{ fontSize: 28, color: isDark ? '#60A5FA' : '#0F172A' }} />
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em', fontSize: '1.25rem' }}>
+              Ticket Management
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              Live Workspace Operations Desk • {user?.client_name ? `${user.client_name}` : user?.department_name ? `${user.department_name}` : 'Indiranagar-1317'}
+            </Typography>
+          </Box>
+        </Stack>
 
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setCreateModalOpen(true)}
           sx={{
-            bgcolor: '#0F172A',
-            '&:hover': { bgcolor: '#1E293B' },
+            bgcolor: isDark ? '#3B82F6' : '#0F172A',
+            '&:hover': { bgcolor: isDark ? '#2563EB' : '#1E293B' },
             px: 2.5,
             py: 1,
             fontWeight: 700,
             borderRadius: 2,
+            boxShadow: isDark ? '0 0 16px rgba(59, 130, 246, 0.3)' : 'none',
           }}
         >
           Create New Ticket
         </Button>
       </Stack>
 
-      {/* Tabs & Controls Section */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 2,
-          mb: 3,
-          borderRadius: 3,
-          border: '1px solid #E2E8F0',
-          backgroundColor: '#FFFFFF',
-        }}
-      >
-        {/* Open vs Closed Tabs */}
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          spacing={2}
-          sx={{ borderBottom: '1px solid #E2E8F0', pb: 1.5, mb: 2 }}
-        >
-          <Tabs
-            value={activeTab}
-            onChange={(e, val) => {
-              setActiveTab(val)
-              setPage(1)
-            }}
-            textColor="primary"
-            indicatorColor="primary"
+      {/* Main Two-Panel Layout (Left: Master List, Right: Detail Pane) */}
+      <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
+        {/* Left Column: Tickets Master List */}
+        <Grid item xs={12} md={5} lg={5}>
+          {/* Controls & Tabs Panel */}
+          <Paper
+            elevation={0}
             sx={{
-              minHeight: 40,
-              '& .MuiTab-root': {
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                minHeight: 40,
-                textTransform: 'none',
-              },
+              p: 2,
+              mb: 2,
+              borderRadius: 3,
+              border: `1px solid ${theme.palette.divider}`,
+              bgcolor: theme.palette.background.paper,
             }}
           >
-            <Tab label="Open Tickets" value="open" />
-            <Tab label="Closed Tickets" value="closed" />
-          </Tabs>
+            {/* Tabs: Open Tickets & Closed Tickets */}
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ borderBottom: `1px solid ${theme.palette.divider}`, pb: 1, mb: 1.5 }}
+            >
+              <Tabs
+                value={activeTab}
+                onChange={(e, val) => {
+                  setActiveTab(val)
+                  setPage(1)
+                }}
+                textColor="primary"
+                indicatorColor="primary"
+                sx={{
+                  minHeight: 36,
+                  '& .MuiTab-root': {
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    minHeight: 36,
+                    py: 0.5,
+                    px: 1.5,
+                    textTransform: 'none',
+                  },
+                }}
+              >
+                <Tab label="Open Tickets" value="open" />
+                <Tab label="Closed Tickets" value="closed" />
+              </Tabs>
 
-          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
-            {totalCount} {activeTab === 'open' ? 'Open' : 'Closed'} Tickets Found
-          </Typography>
-        </Stack>
+              <Chip
+                label={`${totalCount} Tickets`}
+                size="small"
+                sx={{
+                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F1F5F9',
+                  color: 'text.secondary',
+                  fontWeight: 700,
+                  fontSize: '0.7rem',
+                  height: 22,
+                }}
+              />
+            </Stack>
 
-        {/* Filter Bar */}
-        <Stack spacing={2}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="center">
-            {/* Search Input */}
+            {/* Search Bar matching Wireframe */}
             <TextField
               size="small"
-              placeholder="Search by issue text or ticket #..."
+              placeholder="Search by ticket issue text or #..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
@@ -228,178 +262,226 @@ export const TicketsDashboard = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#94A3B8', fontSize: 20 }} />
+                    <SearchIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
                   </InputAdornment>
                 ),
               }}
-              sx={{ bgcolor: '#F8FAFC', borderRadius: 2 }}
+              sx={{ mb: 1.5 }}
             />
 
-            {/* Sort Dropdown */}
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel>Sort Time</InputLabel>
-              <Select
-                value={ordering}
-                onChange={(e) => setOrdering(e.target.value)}
-                label="Sort Time"
-                sx={{ bgcolor: '#F8FAFC' }}
-              >
-                <MenuItem value="-created_at">Newest First</MenuItem>
-                <MenuItem value="created_at">Older First</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
+            {/* Filter Bar matching Wireframe */}
+            <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+              {/* Client Filter */}
+              <FormControl size="small" sx={{ minWidth: 110, flex: 1 }}>
+                <InputLabel sx={{ fontSize: '0.75rem' }}>Client</InputLabel>
+                <Select
+                  value={filterClient}
+                  onChange={handleFilterChange(setFilterClient)}
+                  label="Client"
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  <MenuItem value="" sx={{ fontSize: '0.8rem' }}>All Clients</MenuItem>
+                  {auxData.clients?.map((c) => (
+                    <MenuItem key={c.id} value={c.name} sx={{ fontSize: '0.8rem' }}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-          {/* Additional Filter Dropdowns */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} flexWrap="wrap" alignItems="center">
-            {/* Client Filter */}
-            <FormControl size="small" sx={{ minWidth: 150, flex: 1 }}>
-              <InputLabel>Client</InputLabel>
-              <Select
-                value={filterClient}
-                onChange={handleFilterChange(setFilterClient)}
-                label="Client"
-                sx={{ bgcolor: '#F8FAFC' }}
-              >
-                <MenuItem value="">All Clients</MenuItem>
-                {auxData.clients?.map((c) => (
-                  <MenuItem key={c.id} value={c.name}>
-                    {c.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              {/* Department Filter */}
+              <FormControl size="small" sx={{ minWidth: 120, flex: 1 }}>
+                <InputLabel sx={{ fontSize: '0.75rem' }}>Department</InputLabel>
+                <Select
+                  value={filterDepartment}
+                  onChange={handleFilterChange(setFilterDepartment)}
+                  label="Department"
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  <MenuItem value="" sx={{ fontSize: '0.8rem' }}>All Departments</MenuItem>
+                  {auxData.departments?.map((d) => (
+                    <MenuItem key={d.id} value={d.name} sx={{ fontSize: '0.8rem' }}>
+                      {d.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            {/* Department Filter */}
-            <FormControl size="small" sx={{ minWidth: 160, flex: 1 }}>
-              <InputLabel>Department</InputLabel>
-              <Select
-                value={filterDepartment}
-                onChange={handleFilterChange(setFilterDepartment)}
-                label="Department"
-                sx={{ bgcolor: '#F8FAFC' }}
-              >
-                <MenuItem value="">All Departments</MenuItem>
-                {auxData.departments?.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              {/* Status Filter */}
+              <FormControl size="small" sx={{ minWidth: 110, flex: 1 }}>
+                <InputLabel sx={{ fontSize: '0.75rem' }}>Status</InputLabel>
+                <Select
+                  value={filterStatus}
+                  onChange={handleFilterChange(setFilterStatus)}
+                  label="Status"
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  <MenuItem value="" sx={{ fontSize: '0.8rem' }}>All</MenuItem>
+                  {activeTab === 'open' ? (
+                    <>
+                      <MenuItem value="PENDING_TECHNICIAN_ASSIGNMENT" sx={{ fontSize: '0.75rem' }}>Pending Assignment</MenuItem>
+                      <MenuItem value="PENDING_TECHNICIAN_ASSESSMENT" sx={{ fontSize: '0.75rem' }}>Pending Assessment</MenuItem>
+                      <MenuItem value="PENDING_DEPARTMENT_REVIEW" sx={{ fontSize: '0.75rem' }}>Pending Review</MenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <MenuItem value="RESOLVED" sx={{ fontSize: '0.75rem' }}>Resolved</MenuItem>
+                      <MenuItem value="CLOSED" sx={{ fontSize: '0.75rem' }}>Closed</MenuItem>
+                    </>
+                  )}
+                </Select>
+              </FormControl>
 
-            {/* Status Filter */}
-            <FormControl size="small" sx={{ minWidth: 160, flex: 1 }}>
-              <InputLabel>Ticket Status</InputLabel>
-              <Select
-                value={filterStatus}
-                onChange={handleFilterChange(setFilterStatus)}
-                label="Ticket Status"
-                sx={{ bgcolor: '#F8FAFC' }}
-              >
-                <MenuItem value="">All Statuses</MenuItem>
-                {activeTab === 'open' ? (
-                  <>
-                    <MenuItem value="PENDING_TECHNICIAN_ASSIGNMENT">Pending Technician Assignment</MenuItem>
-                    <MenuItem value="PENDING_TECHNICIAN_ASSESSMENT">Pending Technician Assessment</MenuItem>
-                    <MenuItem value="PENDING_DEPARTMENT_REVIEW">Pending Department POC Review</MenuItem>
-                  </>
-                ) : (
-                  <>
-                    <MenuItem value="RESOLVED">Resolved</MenuItem>
-                    <MenuItem value="CLOSED">Closed</MenuItem>
-                  </>
-                )}
-              </Select>
-            </FormControl>
+              {/* Sort Dropdown */}
+              <FormControl size="small" sx={{ minWidth: 110 }}>
+                <InputLabel sx={{ fontSize: '0.75rem' }}>Sort</InputLabel>
+                <Select
+                  value={ordering}
+                  onChange={(e) => setOrdering(e.target.value)}
+                  label="Sort"
+                  sx={{ fontSize: '0.8rem' }}
+                >
+                  <MenuItem value="-created_at" sx={{ fontSize: '0.8rem' }}>Newest First</MenuItem>
+                  <MenuItem value="created_at" sx={{ fontSize: '0.8rem' }}>Older First</MenuItem>
+                </Select>
+              </FormControl>
 
-            {/* Reset Filters Button */}
-            {hasActiveFilters && (
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<RestartAltIcon />}
-                onClick={handleClearFilters}
-                sx={{ height: 40, px: 2, fontWeight: 700, borderColor: '#CBD5E1', color: '#475569' }}
-              >
-                Clear
-              </Button>
-            )}
-          </Stack>
-        </Stack>
-      </Paper>
+              {/* Reset Filters */}
+              {hasActiveFilters && (
+                <IconButton
+                  size="small"
+                  onClick={handleClearFilters}
+                  sx={{
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 1.5,
+                    p: 0.8,
+                  }}
+                >
+                  <RestartAltIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Stack>
+          </Paper>
 
-      {/* Tickets List Section */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+          {/* Cards List Section */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
-          <CircularProgress size={36} sx={{ color: '#0F172A', mb: 2 }} />
-          <Typography variant="body2" sx={{ color: '#64748B' }}>
-            Loading tickets...
-          </Typography>
-        </Box>
-      ) : tickets.length === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{
-            py: 8,
-            px: 3,
-            textAlign: 'center',
-            borderRadius: 3,
-            border: '1px dashed #CBD5E1',
-            bgcolor: '#FFFFFF',
+          {loading ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6 }}>
+              <CircularProgress size={32} sx={{ mb: 1.5 }} />
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Fetching tickets...
+              </Typography>
+            </Box>
+          ) : tickets.length === 0 ? (
+            <Paper
+              elevation={0}
+              sx={{
+                py: 6,
+                px: 2,
+                textAlign: 'center',
+                borderRadius: 3,
+                border: `1px dashed ${theme.palette.divider}`,
+                bgcolor: theme.palette.background.paper,
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
+                No tickets found
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
+                {hasActiveFilters
+                  ? 'No tickets match the selected filters.'
+                  : `No ${activeTab} tickets in your workspace queue.`}
+              </Typography>
+              {hasActiveFilters && (
+                <Button variant="outlined" size="small" onClick={handleClearFilters}>
+                  Clear Filters
+                </Button>
+              )}
+            </Paper>
+          ) : (
+            <Box sx={{ maxHeight: { md: 'calc(100vh - 220px)' }, overflowY: { md: 'auto' }, pr: { md: 1 } }}>
+              {tickets.map((t) => (
+                <TicketCard
+                  key={t.id}
+                  ticket={t}
+                  onView={handleSelectTicket}
+                  isSelected={t.id === selectedTicketId}
+                />
+              ))}
+
+              {/* Server-Side Pagination */}
+              {totalPages > 1 && (
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ pt: 1.5, pb: 2, borderTop: `1px solid ${theme.palette.divider}` }}
+                >
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                    Page {page} of {totalPages}
+                  </Typography>
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(e, val) => setPage(val)}
+                    color="primary"
+                    size="small"
+                    shape="rounded"
+                  />
+                </Stack>
+              )}
+            </Box>
+          )}
+        </Grid>
+
+        {/* Right Column: Ticket Detail Pane (Wireframe Accurate Desktop Split Layout) */}
+        {!isMobile && (
+          <Grid item md={7} lg={7} sx={{ position: 'sticky', top: 80, height: 'calc(100vh - 120px)' }}>
+            <TicketDetailPane
+              ticketId={selectedTicketId}
+              onTicketUpdated={() => fetchTickets()}
+            />
+          </Grid>
+        )}
+      </Grid>
+
+      {/* Mobile Drawer/Modal for Ticket Details */}
+      {isMobile && (
+        <Dialog
+          open={mobileDetailOpen}
+          onClose={() => setMobileDetailOpen(false)}
+          fullWidth
+          maxWidth="md"
+          PaperProps={{
+            sx: {
+              height: '90vh',
+              maxHeight: '90vh',
+              borderRadius: 3,
+            },
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#334155', mb: 1 }}>
-            No tickets found
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748B', maxWidth: 400, mx: 'auto', mb: 2.5 }}>
-            {hasActiveFilters
-              ? 'No tickets match the selected filters or search terms. Try clearing filters.'
-              : `There are currently no ${activeTab} tickets in your workspace queue.`}
-          </Typography>
-          {hasActiveFilters && (
-            <Button variant="outlined" size="small" onClick={handleClearFilters}>
-              Clear All Filters
-            </Button>
-          )}
-        </Paper>
-      ) : (
-        <Box>
-          {tickets.map((ticket) => (
-            <TicketCard key={ticket.id} ticket={ticket} onView={handleViewTicket} />
-          ))}
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              justifyContent="space-between"
-              alignItems="center"
-              spacing={2}
-              sx={{ mt: 3, pt: 2, borderTop: '1px solid #E2E8F0' }}
-            >
-              <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
-                Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)} of {totalCount} records
-              </Typography>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(e, val) => setPage(val)}
-                color="primary"
-                shape="rounded"
-              />
-            </Stack>
-          )}
-        </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, bgcolor: theme.palette.background.paper }}>
+            <IconButton onClick={() => setMobileDetailOpen(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <DialogContent sx={{ p: 0, height: '100%' }}>
+            <TicketDetailPane
+              ticketId={selectedTicketId}
+              onTicketUpdated={() => {
+                fetchTickets()
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       )}
 
-      {/* Modals */}
+      {/* Create Ticket Modal */}
       <CreateTicketModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
@@ -407,18 +489,6 @@ export const TicketsDashboard = () => {
           fetchTickets()
         }}
       />
-
-      <TicketDetailModal
-        open={detailModalOpen}
-        ticketId={selectedTicketId}
-        onClose={() => {
-          setDetailModalOpen(false)
-          setSelectedTicketId(null)
-        }}
-        onTicketUpdated={() => {
-          fetchTickets()
-        }}
-      />
-    </Container>
+    </Box>
   )
 }
