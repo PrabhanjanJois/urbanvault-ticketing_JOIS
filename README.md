@@ -2,7 +2,14 @@
 
 A modern, production-minded ticketing and facility management platform built for **UrbanVault** (managed workspace & flexible office operator) to triage, route, assign, and resolve physical facility issues across office locations.
 
-Built with **React 18**, **Material UI (MUI v5)**, **Vite**, **Python 3.12**, **Django 5**, **Django REST Framework**, and **SQLite / PostgreSQL**.
+Built with **React 18**, **Material UI (MUI v5)**, **Vite**, **Python 3.9 - 3.12**, **Django**, **Django REST Framework**, and **SQLite / PostgreSQL**.
+
+---
+
+> [!TIP]
+> ### 📺 Product Demo & Walkthrough Video
+> **[▶️ Click here to watch the full Loom Walkthrough Demo](https://www.loom.com/share/f1fcd7021b9348f280618aef16321585)**  
+> *(Covers the 10-step interactive tour, 1-click persona switching, photo attachments, technician assessments, light/dark modes, and mobile/tablet responsiveness)*.
 
 ---
 
