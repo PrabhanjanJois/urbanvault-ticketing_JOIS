@@ -96,52 +96,29 @@ export const TicketCard = ({ ticket, onView, isSelected = false }) => {
     >
       <CardContent sx={{ p: { xs: 2, sm: 2.25 }, '&:last-child': { pb: 2 } }}>
         <Stack spacing={1.2}>
-          {/* Top Line: Title + Chips */}
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: '0.975rem',
-                  color: 'text.primary',
-                  lineHeight: 1.3,
-                  mb: 0.5,
-                }}
-              >
-                {ticket.title}
-              </Typography>
+          {/* Row 1: Title & Status Badge */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 1.5,
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                color: 'text.primary',
+                lineHeight: 1.35,
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              {ticket.title}
+            </Typography>
 
-              <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                <Chip
-                  icon={<PlaceOutlinedIcon sx={{ fontSize: '0.85rem !important' }} />}
-                  label={locationStr}
-                  size="small"
-                  sx={{
-                    bgcolor: isDark ? '#1E293B' : '#F1F5F9',
-                    color: isDark ? '#E2E8F0' : '#334155',
-                    fontWeight: 600,
-                    fontSize: '0.725rem',
-                    height: 22,
-                  }}
-                />
-
-                <Chip
-                  label={`#${ticket.ticket_number}`}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '0.7rem',
-                    color: 'text.secondary',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#CBD5E1',
-                    height: 22,
-                  }}
-                />
-              </Stack>
-            </Box>
-
-            {/* Status Chip */}
             <Chip
               label={statusCfg.label}
               size="small"
@@ -155,39 +132,82 @@ export const TicketCard = ({ ticket, onView, isSelected = false }) => {
                 flexShrink: 0,
               }}
             />
-          </Stack>
+          </Box>
 
-          {/* Metadata Line */}
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1.5}
-            flexWrap="wrap"
-            sx={{ color: 'text.secondary', fontSize: '0.775rem' }}
+          {/* Row 2: Location and Ticket ID Chips */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Chip
+              icon={<PlaceOutlinedIcon sx={{ fontSize: '0.85rem !important' }} />}
+              label={locationStr}
+              size="small"
+              sx={{
+                bgcolor: isDark ? '#1E293B' : '#F1F5F9',
+                color: isDark ? '#E2E8F0' : '#334155',
+                fontWeight: 600,
+                fontSize: '0.725rem',
+                height: 22,
+              }}
+            />
+
+            <Chip
+              label={`#${ticket.ticket_number}`}
+              size="small"
+              variant="outlined"
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.7rem',
+                color: 'text.secondary',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#CBD5E1',
+                height: 22,
+              }}
+            />
+          </Box>
+
+          {/* Row 3: Metadata Line (Created Date & Author with safe wrapping) */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 1,
+              color: 'text.secondary',
+              fontSize: '0.775rem',
+              lineHeight: 1.4,
+              pt: 0.25,
+            }}
           >
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <AccessTimeIcon sx={{ fontSize: 14 }} />
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, whiteSpace: 'nowrap' }}>
+              <AccessTimeIcon sx={{ fontSize: 14, flexShrink: 0 }} />
               <span>Created {ticket.created_at}</span>
-            </Stack>
+            </Box>
 
-            <span>•</span>
+            <Box component="span" sx={{ opacity: 0.5, userSelect: 'none' }}>•</Box>
 
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <PersonOutlinedIcon sx={{ fontSize: 14 }} />
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, whiteSpace: 'nowrap' }}>
+              <PersonOutlinedIcon sx={{ fontSize: 14, flexShrink: 0 }} />
               <span>
-                <strong>{ticket.created_by_name}</strong> ({ticket.created_by_title || 'Client POC'})
+                <strong>{ticket.created_by_name}</strong>{' '}
+                <span style={{ opacity: 0.85 }}>({ticket.created_by_title || 'Client POC'})</span>
               </span>
-            </Stack>
-          </Stack>
+            </Box>
+          </Box>
 
-          {/* Current Assignee Line matching wireframe */}
+          {/* Row 4: Current Assignee Line matching wireframe */}
           <Box
             sx={{
               pt: 1,
               borderTop: `1px dashed ${isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9'}`,
             }}
           >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.8rem', display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                fontSize: '0.8rem',
+                lineHeight: 1.4,
+                display: 'block',
+              }}
+            >
               Current Assignee(s):{' '}
               <strong style={{ color: isDark ? '#F1F5F9' : '#0F172A' }}>
                 {ticket.assigned_to_name

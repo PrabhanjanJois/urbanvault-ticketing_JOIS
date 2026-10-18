@@ -226,7 +226,8 @@ export const TicketsDashboard = () => {
         {/* Left Column: Tickets Master List */}
         <Box
           sx={{
-            width: { xs: '100%', sm: '350px', md: '390px', lg: '420px' },
+            width: { xs: '100%', sm: '450px', md: '490px', lg: '530px' },
+            minWidth: { sm: '420px' },
             flexShrink: 0,
           }}
         >
@@ -289,20 +290,20 @@ export const TicketsDashboard = () => {
               sx={{ mb: 1.5 }}
             />
 
-            {/* Filter Bar matching Wireframe */}
-            <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+            {/* Filter Controls: Clean 2x2 Grid Layout */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.2 }}>
               {/* Client Filter */}
-              <FormControl size="small" sx={{ minWidth: 110, flex: 1 }}>
-                <InputLabel sx={{ fontSize: '0.75rem' }}>Client</InputLabel>
+              <FormControl size="small" fullWidth>
+                <InputLabel sx={{ fontSize: '0.8rem' }}>Client</InputLabel>
                 <Select
                   value={filterClient}
                   onChange={handleFilterChange(setFilterClient)}
                   label="Client"
-                  sx={{ fontSize: '0.8rem' }}
+                  sx={{ fontSize: '0.8125rem' }}
                 >
-                  <MenuItem value="" sx={{ fontSize: '0.8rem' }}>All Clients</MenuItem>
+                  <MenuItem value="" sx={{ fontSize: '0.8125rem' }}>All Clients</MenuItem>
                   {auxData.clients?.map((c) => (
-                    <MenuItem key={c.id} value={c.name} sx={{ fontSize: '0.8rem' }}>
+                    <MenuItem key={c.id} value={c.name} sx={{ fontSize: '0.8125rem' }}>
                       {c.name}
                     </MenuItem>
                   ))}
@@ -310,17 +311,17 @@ export const TicketsDashboard = () => {
               </FormControl>
 
               {/* Department Filter */}
-              <FormControl size="small" sx={{ minWidth: 120, flex: 1 }}>
-                <InputLabel sx={{ fontSize: '0.75rem' }}>Department</InputLabel>
+              <FormControl size="small" fullWidth>
+                <InputLabel sx={{ fontSize: '0.8rem' }}>Department</InputLabel>
                 <Select
                   value={filterDepartment}
                   onChange={handleFilterChange(setFilterDepartment)}
                   label="Department"
-                  sx={{ fontSize: '0.8rem' }}
+                  sx={{ fontSize: '0.8125rem' }}
                 >
-                  <MenuItem value="" sx={{ fontSize: '0.8rem' }}>All Departments</MenuItem>
+                  <MenuItem value="" sx={{ fontSize: '0.8125rem' }}>All Departments</MenuItem>
                   {auxData.departments?.map((d) => (
-                    <MenuItem key={d.id} value={d.name} sx={{ fontSize: '0.8rem' }}>
+                    <MenuItem key={d.id} value={d.name} sx={{ fontSize: '0.8125rem' }}>
                       {d.name}
                     </MenuItem>
                   ))}
@@ -328,55 +329,58 @@ export const TicketsDashboard = () => {
               </FormControl>
 
               {/* Status Filter */}
-              <FormControl size="small" sx={{ minWidth: 110, flex: 1 }}>
-                <InputLabel sx={{ fontSize: '0.75rem' }}>Status</InputLabel>
+              <FormControl size="small" fullWidth>
+                <InputLabel sx={{ fontSize: '0.8rem' }}>Status</InputLabel>
                 <Select
                   value={filterStatus}
                   onChange={handleFilterChange(setFilterStatus)}
                   label="Status"
-                  sx={{ fontSize: '0.8rem' }}
+                  sx={{ fontSize: '0.8125rem' }}
                 >
-                  <MenuItem value="" sx={{ fontSize: '0.8rem' }}>All</MenuItem>
+                  <MenuItem value="" sx={{ fontSize: '0.8125rem' }}>All Statuses</MenuItem>
                   {activeTab === 'open' ? [
-                    <MenuItem key="PTA" value="PENDING_TECHNICIAN_ASSIGNMENT" sx={{ fontSize: '0.75rem' }}>Pending Assignment</MenuItem>,
-                    <MenuItem key="PTASS" value="PENDING_TECHNICIAN_ASSESSMENT" sx={{ fontSize: '0.75rem' }}>Pending Assessment</MenuItem>,
-                    <MenuItem key="PDR" value="PENDING_DEPARTMENT_REVIEW" sx={{ fontSize: '0.75rem' }}>Pending Review</MenuItem>,
+                    <MenuItem key="PTA" value="PENDING_TECHNICIAN_ASSIGNMENT" sx={{ fontSize: '0.8rem' }}>Pending Assignment</MenuItem>,
+                    <MenuItem key="PTASS" value="PENDING_TECHNICIAN_ASSESSMENT" sx={{ fontSize: '0.8rem' }}>Pending Assessment</MenuItem>,
+                    <MenuItem key="PDR" value="PENDING_DEPARTMENT_REVIEW" sx={{ fontSize: '0.8rem' }}>Pending Review</MenuItem>,
                   ] : [
-                    <MenuItem key="RES" value="RESOLVED" sx={{ fontSize: '0.75rem' }}>Resolved</MenuItem>,
-                    <MenuItem key="CLS" value="CLOSED" sx={{ fontSize: '0.75rem' }}>Closed</MenuItem>,
+                    <MenuItem key="RES" value="RESOLVED" sx={{ fontSize: '0.8rem' }}>Resolved</MenuItem>,
+                    <MenuItem key="CLS" value="CLOSED" sx={{ fontSize: '0.8rem' }}>Closed</MenuItem>,
                   ]}
                 </Select>
               </FormControl>
 
-              {/* Sort Dropdown */}
-              <FormControl size="small" sx={{ minWidth: 110 }}>
-                <InputLabel sx={{ fontSize: '0.75rem' }}>Sort</InputLabel>
-                <Select
-                  value={ordering}
-                  onChange={(e) => setOrdering(e.target.value)}
-                  label="Sort"
-                  sx={{ fontSize: '0.8rem' }}
-                >
-                  <MenuItem value="-created_at" sx={{ fontSize: '0.8rem' }}>Newest First</MenuItem>
-                  <MenuItem value="created_at" sx={{ fontSize: '0.8rem' }}>Oldest First</MenuItem>
-                </Select>
-              </FormControl>
+              {/* Sort Dropdown + Reset Button */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FormControl size="small" sx={{ flex: 1 }}>
+                  <InputLabel sx={{ fontSize: '0.8rem' }}>Sort</InputLabel>
+                  <Select
+                    value={ordering}
+                    onChange={(e) => setOrdering(e.target.value)}
+                    label="Sort"
+                    sx={{ fontSize: '0.8125rem' }}
+                  >
+                    <MenuItem value="-created_at" sx={{ fontSize: '0.8125rem' }}>Newest First</MenuItem>
+                    <MenuItem value="created_at" sx={{ fontSize: '0.8125rem' }}>Oldest First</MenuItem>
+                  </Select>
+                </FormControl>
 
-              {/* Reset Filters */}
-              {hasActiveFilters && (
-                <IconButton
-                  size="small"
-                  onClick={handleClearFilters}
-                  sx={{
-                    border: `1px solid ${theme.palette.divider}`,
-                    borderRadius: 1.5,
-                    p: 0.8,
-                  }}
-                >
-                  <RestartAltIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Stack>
+                {hasActiveFilters && (
+                  <IconButton
+                    size="small"
+                    onClick={handleClearFilters}
+                    title="Reset Filters"
+                    sx={{
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: 1.5,
+                      p: 0.8,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <RestartAltIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            </Box>
           </Paper>
 
           {/* Cards List Section with scroll container */}
