@@ -118,6 +118,8 @@ class Ticket(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    ac_unit_number = models.CharField(max_length=64, blank=True, default='', help_text='Optional AC / asset unique identifier')
+    image_url = models.CharField(max_length=500, blank=True, default='', help_text='Attached image URL')
     status = models.CharField(
         max_length=40,
         choices=TicketStatus.choices,
@@ -158,6 +160,7 @@ class TicketActivity(models.Model):
         choices=ActivityActionType.choices
     )
     description = models.CharField(max_length=255)
+    image_url = models.CharField(max_length=500, blank=True, default='', help_text='Attached event image URL')
     metadata = models.JSONField(
         default=dict,
         blank=True,
@@ -185,6 +188,7 @@ class TicketComment(models.Model):
         related_name='ticket_comments'
     )
     content = models.TextField()
+    image_url = models.CharField(max_length=500, blank=True, default='', help_text='Attached comment image URL')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:

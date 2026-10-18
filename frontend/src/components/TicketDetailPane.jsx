@@ -19,6 +19,11 @@ import {
   RadioGroup,
   FormControlLabel,
   CircularProgress,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Paper,
   useTheme,
 } from '@mui/material'
@@ -30,6 +35,9 @@ import SendIcon from '@mui/icons-material/Send'
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd'
 import SwapCallsIcon from '@mui/icons-material/SwapCalls'
 import BuildIcon from '@mui/icons-material/Build'
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined'
+import DeleteOutlineIcon from '@mui/icons-material/Delete'
+import CloseIcon from '@mui/icons-material/Close'
 import { getStatusBadgeConfig } from '../utils/status'
 import { useAuth } from '../context/AuthContext'
 import { useColorMode } from '../context/ColorModeContext'
@@ -49,9 +57,20 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
   // Tabs for activity
   const [activityTab, setActivityTab] = useState('all')
 
-  // Sticky comment text
+  // Sticky comment text & image
   const [commentText, setCommentText] = useState('')
+  const [commentFile, setCommentFile] = useState(null)
+  const [commentPreview, setCommentPreview] = useState('')
   const [commentSubmitting, setCommentSubmitting] = useState(false)
+
+  // Lightbox
+  const [lightboxUrl, setLightboxUrl] = useState(null)
+
+  // Mark Resolved dialog & completion image
+  const [resolveDialogOpen, setResolveDialogOpen] = useState(false)
+  const [resolveFile, setResolveFile] = useState(null)
+  const [resolvePreview, setResolvePreview] = useState('')
+  const [resolveNotes, setResolveNotes] = useState('')
 
   // CTAs state
   const [activeActionPanel, setActiveActionPanel] = useState(null) // 'ASSIGN_WORKER' | 'CHANGE_DEPT' | 'ASSESSMENT' | null
@@ -64,6 +83,18 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
   const [forwardingNote, setForwardingNote] = useState('')
   const [assessmentType, setAssessmentType] = useState('FULLY_RESOLVED')
   const [assessmentNotes, setAssessmentNotes] = useState('')
+  const [assessmentFile, setAssessmentFile] = useState(null)
+  const [assessmentPreview, setAssessmentPreview] = useState('')
+
+  const uploadFile = async (file) => {
+    if (!file) return ''
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await client.post('/ticketing/upload/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res.data.file_url || ''
+  }
 
   const fetchTicketDetails = async (id) => {
     try {
@@ -103,13 +134,20 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
 
   // Handle posting a comment
   const handlePostComment = async () => {
-    if (!commentText.trim()) return
+    if (!commentText.trim() && !commentFile) return
     setCommentSubmitting(true)
     try {
+      let uploadedUrl = ''
+      if (commentFile) {
+        uploadedUrl = await uploadFile(commentFile)
+      }
       await client.post(`/ticketing/tickets/${ticket.id}/comments/`, {
         content: commentText.trim(),
+        image_url: uploadedUrl,
       })
       setCommentText('')
+      setCommentFile(null)
+      setCommentPreview('')
       await fetchTicketDetails(ticket.id)
       if (onTicketUpdated) onTicketUpdated()
     } catch (err) {
@@ -125,10 +163,21 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
     setActionLoading(true)
     setError(null)
     try {
-      const res = await client.post(`/ticketing/tickets/${ticket.id}/mark-resolved/`)
+      let uploadedUrl = ''
+      if (resolveFile) {
+        uploadedUrl = await uploadFile(resolveFile)
+      }
+      const res = await client.post(`/ticketing/tickets/${ticket.id}/mark-resolved/`, {
+        image_url: uploadedUrl,
+        notes: resolveNotes.trim(),
+      })
       setTicket(res.data)
       setActionSuccess('Ticket has been successfully marked as resolved!')
       setActiveActionPanel(null)
+      setResolveDialogOpen(false)
+      setResolveFile(null)
+      setResolvePreview('')
+      setResolveNotes('')
       if (onTicketUpdated) onTicketUpdated()
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to mark ticket resolved.')
@@ -189,13 +238,21 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
     setActionLoading(true)
     setError(null)
     try {
+      let uploadedUrl = ''
+      if (assessmentFile) {
+        uploadedUrl = await uploadFile(assessmentFile)
+      }
       const res = await client.post(`/ticketing/tickets/${ticket.id}/submit-assessment/`, {
         assessment_type: assessmentType,
         notes: assessmentNotes.trim(),
+        image_url: uploadedUrl,
       })
       setTicket(res.data)
       setActionSuccess('Assessment submitted successfully!')
       setActiveActionPanel(null)
+      setAssessmentFile(null)
+      setAssessmentPreview('')
+      setAssessmentNotes('')
       if (onTicketUpdated) onTicketUpdated()
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to submit assessment.')
@@ -261,6 +318,11 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
   const locationStr = `${ticket.property_name || 'Property'}; ${floorsStr}`
 
   // Filter activities for tabs
+  const allActionsCount = ticket?.activities?.length || 0
+  const commentsCount = ticket?.activities
+    ? ticket.activities.filter((a) => a.action_type === 'COMMENT_ADDED').length
+    : (ticket?.comments?.length || 0)
+
   const filteredActivities = ticket?.activities
     ? activityTab === 'comments'
       ? ticket.activities.filter((a) => a.action_type === 'COMMENT_ADDED')
@@ -295,13 +357,13 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
       {/* 1. Header (Sticky in Wireframe) */}
       <Box
         sx={{
-          p: 2.5,
+          p: { xs: 2, sm: 2.5 },
           borderBottom: `1px solid ${theme.palette.divider}`,
           bgcolor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
         }}
       >
         <Stack spacing={1.5}>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'flex-start' }} spacing={1.5}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5, fontSize: '1.25rem' }}>
                 {ticket.title}
@@ -331,6 +393,20 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                     height: 24,
                   }}
                 />
+                {ticket.ac_unit_number && (
+                  <Chip
+                    label={`Asset ID: ${ticket.ac_unit_number}`}
+                    size="small"
+                    sx={{
+                      bgcolor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#E0F2FE',
+                      color: isDark ? '#38BDF8' : '#0369A1',
+                      fontWeight: 700,
+                      fontSize: '0.725rem',
+                      height: 24,
+                      border: isDark ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #BAE6FD',
+                    }}
+                  />
+                )}
               </Stack>
             </Box>
 
@@ -376,7 +452,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
       </Box>
 
       {/* 2. Scrollable Body */}
-      <Box sx={{ p: 2.5, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Box sx={{ p: { xs: 2, sm: 2.5 }, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
         {/* Feedback Alerts */}
         {actionSuccess && (
           <Alert severity="success" onClose={() => setActionSuccess(null)}>
@@ -392,6 +468,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
         {/* 2A. Sticky Action Required Section (Persona Driven) */}
         {!isResolvedOrClosed && (
           <Box
+            id="tour-action-banner"
             sx={{
               p: 2,
               borderRadius: 2.5,
@@ -431,7 +508,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                   color="success"
                   size="small"
                   startIcon={<CheckCircleOutlinedIcon sx={{ fontSize: '1rem !important' }} />}
-                  onClick={handleMarkResolved}
+                  onClick={() => setResolveDialogOpen(true)}
                   disabled={actionLoading}
                   sx={{
                     ml: { sm: 'auto' },
@@ -561,7 +638,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                       color="success"
                       size="small"
                       startIcon={<CheckCircleOutlinedIcon sx={{ fontSize: '1rem !important' }} />}
-                      onClick={handleMarkResolved}
+                      onClick={() => setResolveDialogOpen(true)}
                       disabled={actionLoading}
                       sx={{
                         fontWeight: 600,
@@ -925,6 +1002,77 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                     sx={{ mb: 2 }}
                   />
 
+                  {/* Assessment Photo Upload */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.75 }}>
+                      Work / Inspection Photo (Optional)
+                    </Typography>
+                    {assessmentPreview ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box
+                          component="img"
+                          src={assessmentPreview}
+                          alt="Assessment preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            borderRadius: 1.5,
+                            objectFit: 'cover',
+                            border: `1px solid ${theme.palette.divider}`,
+                          }}
+                        />
+                        <Button
+                          size="small"
+                          color="error"
+                          startIcon={<DeleteOutlineIcon fontSize="small" />}
+                          onClick={() => {
+                            setAssessmentFile(null)
+                            setAssessmentPreview('')
+                          }}
+                          sx={{ textTransform: 'none', fontSize: '0.8rem' }}
+                        >
+                          Remove Photo
+                        </Button>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="assessment-photo-upload"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              if (file.size > 10 * 1024 * 1024) {
+                                setError('Image must be smaller than 10MB.')
+                                return
+                              }
+                              setAssessmentFile(file)
+                              setAssessmentPreview(URL.createObjectURL(file))
+                            }
+                          }}
+                        />
+                        <label htmlFor="assessment-photo-upload">
+                          <Button
+                            variant="outlined"
+                            component="span"
+                            size="small"
+                            startIcon={<AddPhotoAlternateOutlinedIcon fontSize="small" />}
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.8125rem',
+                              borderColor: theme.palette.divider,
+                              color: 'text.primary',
+                            }}
+                          >
+                            Attach Photo
+                          </Button>
+                        </label>
+                      </Box>
+                    )}
+                  </Box>
+
                   <Stack direction="row" spacing={1.5} justifyContent="flex-end">
                     <Button size="small" onClick={() => setActiveActionPanel(null)}>
                       Cancel
@@ -948,6 +1096,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
 
         {/* 2B. ISSUE DESCRIPTION */}
         <Box
+          id="tour-issue-description"
           sx={{
             p: 2.25,
             borderRadius: 2.5,
@@ -972,6 +1121,45 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
           >
             {ticket.description || 'No detailed description provided.'}
           </Typography>
+
+          {/* Attached Issue Photo if present */}
+          {ticket.image_url && (
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 800,
+                  color: 'text.secondary',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  display: 'block',
+                  mb: 1,
+                }}
+              >
+                ATTACHED ISSUE PHOTO
+              </Typography>
+              <Box
+                component="img"
+                src={ticket.image_url}
+                alt="Reported Issue Photo"
+                onClick={() => setLightboxUrl(ticket.image_url)}
+                sx={{
+                  maxHeight: 180,
+                  maxWidth: 280,
+                  borderRadius: 2,
+                  border: `1px solid ${theme.palette.divider}`,
+                  cursor: 'pointer',
+                  objectFit: 'cover',
+                  display: 'block',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  '&:hover': {
+                    transform: 'scale(1.02)',
+                    boxShadow: isDark ? '0 6px 18px rgba(0,0,0,0.4)' : '0 6px 18px rgba(0,0,0,0.12)',
+                  },
+                }}
+              />
+            </Box>
+          )}
         </Box>
 
         {/* 2C. ACTIVITY Timeline */}
@@ -1043,8 +1231,8 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                 },
               }}
             >
-              <Tab label="All Actions" value="all" />
-              <Tab label="Comments" value="comments" />
+              <Tab label={`All Actions (${allActionsCount})`} value="all" />
+              <Tab label={`Comments (${commentsCount})`} value="comments" />
             </Tabs>
           </Box>
 
@@ -1138,6 +1326,81 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                         )}
                       </Box>
                     )}
+
+                    {/* Comment content bubble */}
+                    {(() => {
+                      const commentBody =
+                        act.comment_content ||
+                        act.metadata?.content ||
+                        (act.action_type === 'COMMENT_ADDED' && act.metadata?.comment_id
+                          ? ticket?.comments?.find((c) => c.id === act.metadata.comment_id)?.content
+                          : null)
+
+                      if (!commentBody) return null
+
+                      return (
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            mt: 1,
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F8FAFC',
+                            border: `1px solid ${theme.palette.divider}`,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: 'text.primary',
+                              fontSize: '0.85rem',
+                              lineHeight: 1.5,
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {commentBody}
+                          </Typography>
+                        </Paper>
+                      )
+                    })()}
+
+                    {/* Attached Photo in Activity / Comment */}
+                    {(() => {
+                      const actImg =
+                        act.image_url ||
+                        act.metadata?.image_url ||
+                        (act.action_type === 'COMMENT_ADDED' && act.metadata?.comment_id
+                          ? ticket?.comments?.find((c) => c.id === act.metadata.comment_id)?.image_url
+                          : null)
+
+                      if (!actImg) return null
+
+                      return (
+                        <Box sx={{ mt: 1 }}>
+                          <Box
+                            component="img"
+                            src={actImg}
+                            alt="Activity attachment"
+                            onClick={() => setLightboxUrl(actImg)}
+                            sx={{
+                              maxHeight: 140,
+                              maxWidth: 220,
+                              borderRadius: 1.5,
+                              border: `1px solid ${theme.palette.divider}`,
+                              cursor: 'pointer',
+                              objectFit: 'cover',
+                              display: 'block',
+                              transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                              '&:hover': {
+                                transform: 'scale(1.03)',
+                                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.15)',
+                              },
+                            }}
+                          />
+                        </Box>
+                      )
+                    })()}
                   </Box>
                 </Box>
               ))
@@ -1153,46 +1416,311 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
           borderTop: `1px solid ${theme.palette.divider}`,
           bgcolor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
           display: 'flex',
-          gap: 1.5,
-          alignItems: 'center',
+          flexDirection: 'column',
+          gap: 1.25,
         }}
       >
-        <TextField
-          placeholder="Write a comment..."
-          size="small"
-          fullWidth
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handlePostComment()
-            }
-          }}
-          disabled={commentSubmitting}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
-        />
-        <Button
-          variant="contained"
-          onClick={handlePostComment}
-          disabled={commentSubmitting || !commentText.trim()}
-          endIcon={<SendIcon />}
-          sx={{
-            px: 2.5,
-            fontWeight: 700,
-            bgcolor: isDark ? '#3B82F6' : '#0F172A',
-            '&:hover': {
-              bgcolor: isDark ? '#2563EB' : '#1E293B',
-            },
-          }}
-        >
-          Post
-        </Button>
+        {/* Comment Image Preview */}
+        {commentPreview && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{
+                position: 'relative',
+                display: 'inline-block',
+                width: 52,
+                height: 52,
+                borderRadius: 1.5,
+                overflow: 'hidden',
+                border: `1px solid ${theme.palette.divider}`,
+              }}
+            >
+              <Box
+                component="img"
+                src={commentPreview}
+                alt="Comment attachment preview"
+                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setCommentFile(null)
+                  setCommentPreview('')
+                }}
+                sx={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  bgcolor: 'rgba(0,0,0,0.65)',
+                  color: '#fff',
+                  p: '2px',
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.85)' },
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 13 }} />
+              </IconButton>
+            </Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              {commentFile?.name} ({(commentFile?.size / 1024).toFixed(0)} KB)
+            </Typography>
+          </Box>
+        )}
+
+        <Box id="tour-comments-box" sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <TextField
+            placeholder="Write a comment..."
+            size="small"
+            fullWidth
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handlePostComment()
+              }
+            }}
+            disabled={commentSubmitting}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
+          />
+
+          <input
+            type="file"
+            accept="image/*"
+            id="comment-photo-input"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                if (file.size > 10 * 1024 * 1024) {
+                  setError('Image must be smaller than 10MB.')
+                  return
+                }
+                setCommentFile(file)
+                setCommentPreview(URL.createObjectURL(file))
+              }
+            }}
+          />
+          <label htmlFor="comment-photo-input">
+            <IconButton
+              component="span"
+              color={commentFile ? 'primary' : 'default'}
+              disabled={commentSubmitting}
+              sx={{
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                p: 1,
+              }}
+              title="Attach photo"
+            >
+              <AddPhotoAlternateOutlinedIcon fontSize="small" />
+            </IconButton>
+          </label>
+
+          <Button
+            variant="contained"
+            onClick={handlePostComment}
+            disabled={commentSubmitting || (!commentText.trim() && !commentFile)}
+            endIcon={<SendIcon />}
+            sx={{
+              px: { xs: 1.5, sm: 2.5 },
+              minWidth: { xs: 'auto', sm: 84 },
+              fontWeight: 700,
+              bgcolor: isDark ? '#3B82F6' : '#0F172A',
+              '&:hover': {
+                bgcolor: isDark ? '#2563EB' : '#1E293B',
+              },
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              {commentSubmitting ? 'Posting...' : 'Post'}
+            </Box>
+          </Button>
+        </Box>
       </Box>
+
+      {/* Mark Resolved with Optional Proof Photo Dialog */}
+      <Dialog
+        open={resolveDialogOpen}
+        onClose={() => !actionLoading && setResolveDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>Mark Ticket Resolved</span>
+          <IconButton
+            size="small"
+            onClick={() => setResolveDialogOpen(false)}
+            disabled={actionLoading}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            Confirm that the reported issue has been completely fixed and verified.
+          </Typography>
+
+          <TextField
+            label="Resolution Notes (Optional)"
+            multiline
+            rows={2}
+            size="small"
+            fullWidth
+            value={resolveNotes}
+            onChange={(e) => setResolveNotes(e.target.value)}
+            placeholder="e.g. Filter replaced and temperature tested normal."
+            sx={{ mb: 2 }}
+          />
+
+          <Box>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.75 }}>
+              Completion / Proof Photo (Optional)
+            </Typography>
+            {resolvePreview ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  component="img"
+                  src={resolvePreview}
+                  alt="Resolution proof"
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 1.5,
+                    objectFit: 'cover',
+                    border: `1px solid ${theme.palette.divider}`,
+                  }}
+                />
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<DeleteOutlineIcon fontSize="small" />}
+                  onClick={() => {
+                    setResolveFile(null)
+                    setResolvePreview('')
+                  }}
+                  sx={{ textTransform: 'none', fontSize: '0.8rem' }}
+                >
+                  Remove Photo
+                </Button>
+              </Box>
+            ) : (
+              <Box>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="resolve-photo-input"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      if (file.size > 10 * 1024 * 1024) {
+                        setError('Image must be smaller than 10MB.')
+                        return
+                      }
+                      setResolveFile(file)
+                      setResolvePreview(URL.createObjectURL(file))
+                    }
+                  }}
+                />
+                <label htmlFor="resolve-photo-input">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    size="small"
+                    startIcon={<AddPhotoAlternateOutlinedIcon fontSize="small" />}
+                    sx={{
+                      textTransform: 'none',
+                      fontSize: '0.8125rem',
+                      borderColor: theme.palette.divider,
+                      color: 'text.primary',
+                    }}
+                  >
+                    Attach Completion Photo
+                  </Button>
+                </label>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 1 }}>
+          <Button
+            size="small"
+            onClick={() => setResolveDialogOpen(false)}
+            disabled={actionLoading}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            onClick={handleMarkResolved}
+            disabled={actionLoading}
+            sx={{ textTransform: 'none', fontWeight: 700, px: 2.5 }}
+          >
+            {actionLoading ? 'Resolving...' : 'Confirm & Resolve'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Lightbox Dialog for full-size viewing */}
+      <Dialog
+        open={Boolean(lightboxUrl)}
+        onClose={() => setLightboxUrl(null)}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            bgcolor: 'transparent',
+            boxShadow: 'none',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        }}
+      >
+        <Box sx={{ position: 'relative', maxWidth: '90vw', maxHeight: '85vh', p: 1 }}>
+          <IconButton
+            onClick={() => setLightboxUrl(null)}
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              bgcolor: 'rgba(0,0,0,0.7)',
+              color: '#FFFFFF',
+              zIndex: 10,
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.9)' },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <Box
+            component="img"
+            src={lightboxUrl}
+            alt="Enlarged preview"
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '80vh',
+              borderRadius: 2,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              display: 'block',
+              objectFit: 'contain',
+            }}
+          />
+        </Box>
+      </Dialog>
     </Paper>
   )
 }

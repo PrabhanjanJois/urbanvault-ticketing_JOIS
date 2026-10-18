@@ -128,3 +128,17 @@ class TestRoleBasedAccessControl:
         res = api_client.post(assess_url, {"assessment_type": "FULLY_RESOLVED"}, format="json")
         assert res.status_code == status.HTTP_403_FORBIDDEN
         assert "You are not the technician assigned to this ticket" in res.data["detail"]
+
+    def test_technician_cannot_create_ticket(self, api_client, setup_rbac_data):
+        technician = setup_rbac_data["technician"]
+        api_client.force_authenticate(user=technician)
+
+        payload = {
+            "title": "Technician trying to create ticket",
+            "description": "This should be forbidden",
+            "department": setup_rbac_data["ticket_a"].department_id,
+            "floors": ["1F"],
+        }
+        res = api_client.post(reverse("ticket-list"), payload, format="json")
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+        assert "Technicians are not authorized to create tickets" in res.data["detail"]

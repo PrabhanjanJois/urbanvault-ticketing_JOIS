@@ -12,13 +12,16 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  Button,
   useTheme,
 } from '@mui/material'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
+import TourOutlinedIcon from '@mui/icons-material/TourOutlined'
 import UrbanVaultLogo from './UrbanVaultLogo'
 import { useAuth } from '../context/AuthContext'
 import { useColorMode } from '../context/ColorModeContext'
+import { startProductTour } from '../utils/tour'
 
 export const Navbar = () => {
   const theme = useTheme()
@@ -60,13 +63,13 @@ export const Navbar = () => {
         zIndex: theme.zIndex.drawer + 1,
       }}
     >
-      <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, md: 3 }, minHeight: 64 }}>
+      <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 1.5, sm: 2, md: 3 }, minHeight: { xs: 58, sm: 64 } }}>
         {/* Brand / Logo */}
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }}>
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: { xs: 34, sm: 40 },
+              height: { xs: 34, sm: 40 },
               borderRadius: 2,
               backgroundColor: isDark ? '#1E293B' : '#0F172A',
               border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
@@ -79,10 +82,10 @@ export const Navbar = () => {
               transition: 'all 0.2s ease',
             }}
           >
-            <UrbanVaultLogo size={28} color={isDark ? '#38BDF8' : '#FFFFFF'} />
+            <UrbanVaultLogo size={24} color={isDark ? '#38BDF8' : '#FFFFFF'} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', fontSize: '1.1rem' }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', fontSize: { xs: '1rem', sm: '1.1rem' } }}>
               UrbanVault
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500, display: { xs: 'none', sm: 'block' } }}>
@@ -91,16 +94,65 @@ export const Navbar = () => {
           </Box>
         </Stack>
 
-        {/* Right Section: Single Clean Persona Switcher & Dark Mode Toggle */}
-        <Stack direction="row" alignItems="center" spacing={1.5}>
-          {/* Persona Switcher Dropdown (No cut-off floating label, clean unified card style) */}
-          <FormControl size="small">
+        {/* Right Section: 1. Start Tour (left), 2. Persona Switcher (middle), 3. Theme Toggle (right) */}
+        <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }}>
+          {/* 1. Start Tour Button (Extreme Left of actions) */}
+          <Button
+            id="tour-nav-btn"
+            variant="outlined"
+            size="small"
+            startIcon={<TourOutlinedIcon sx={{ fontSize: '1.1rem !important', mr: { xs: -0.5, sm: 0 } }} />}
+            onClick={() => {
+              startProductTour({
+                isDark,
+                onSelectFirstTicket: () => {
+                  if (!document.querySelector('#tour-ticket-detail') && document.querySelector('#tour-ticket-list .MuiCard-root')) {
+                    document.querySelector('#tour-ticket-list .MuiCard-root')?.click()
+                  }
+                },
+              })
+            }}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: '0.825rem',
+              height: { xs: 38, sm: 42 },
+              minHeight: { xs: 38, sm: 42 },
+              maxHeight: { xs: 38, sm: 42 },
+              px: { xs: 1, sm: 1.75 },
+              minWidth: { xs: 'auto', sm: 105 },
+              borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : '#0284C7',
+              color: isDark ? '#38BDF8' : '#0369A1',
+              bgcolor: isDark ? 'rgba(56, 189, 248, 0.08)' : '#F0F9FF',
+              '&:hover': {
+                bgcolor: isDark ? 'rgba(56, 189, 248, 0.16)' : '#E0F2FE',
+                borderColor: isDark ? '#38BDF8' : '#0284C7',
+              },
+              whiteSpace: 'nowrap',
+              boxShadow: isDark ? '0 0 10px rgba(56, 189, 248, 0.15)' : 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              boxSizing: 'border-box',
+            }}
+          >
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Start Tour
+            </Box>
+          </Button>
+
+          {/* 2. Persona Switcher Dropdown (Afterwards / Middle) */}
+          <FormControl id="tour-persona-switcher" size="small" sx={{ m: 0 }}>
             <Select
               value={user?.username || ''}
               onChange={handlePersonaChange}
               disabled={loading}
               displayEmpty
               sx={{
+                height: { xs: 38, sm: 42 },
+                minHeight: { xs: 38, sm: 42 },
+                maxHeight: { xs: 38, sm: 42 },
+                maxWidth: { xs: 145, sm: 220, md: 'none' },
                 borderRadius: 2.5,
                 bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
                 border: `1px solid ${theme.palette.divider}`,
@@ -113,10 +165,15 @@ export const Navbar = () => {
                   border: 'none',
                 },
                 '& .MuiSelect-select': {
-                  display: 'flex',
-                  alignItems: 'center',
-                  py: 0.6,
-                  pr: 3.5,
+                  display: 'flex !important',
+                  alignItems: 'center !important',
+                  height: { xs: '38px !important', sm: '42px !important' },
+                  padding: { xs: '0 26px 0 8px !important', sm: '0 34px 0 10px !important' },
+                  boxSizing: 'border-box !important',
+                },
+                '& .MuiSelect-icon': {
+                  top: 'calc(50% - 12px)',
+                  right: { xs: 4, sm: 8 },
                 },
               }}
               renderValue={(selected) => {
@@ -124,29 +181,63 @@ export const Navbar = () => {
                 if (!active) return 'Select Persona'
                 const badge = getRoleBadge(active.role)
                 return (
-                  <Stack direction="row" alignItems="center" spacing={1.2}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: { xs: 0.8, sm: 1.2 },
+                      height: '100%',
+                      width: '100%',
+                    }}
+                  >
                     <Avatar
                       sx={{
-                        width: 28,
-                        height: 28,
-                        fontSize: '0.75rem',
+                        width: { xs: 26, sm: 28 },
+                        height: { xs: 26, sm: 28 },
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
                         bgcolor: isDark ? '#3B82F6' : '#0F172A',
                         color: '#FFFFFF',
                         fontWeight: 700,
+                        flexShrink: 0,
+                        alignSelf: 'center',
+                        my: 'auto',
                       }}
                     >
                       {active.avatar_initials}
                     </Avatar>
-                    <Box sx={{ textAlign: 'left', minWidth: 0, mr: 0.5 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.2, color: 'text.primary', noWrap: true }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        textAlign: 'left',
+                        minWidth: 0,
+                        pr: 0.5,
+                        my: 'auto',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, lineHeight: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: { xs: '0.78rem', sm: '0.825rem' },
+                            lineHeight: 1.2,
+                            color: 'text.primary',
+                            noWrap: true,
+                            maxWidth: { xs: 75, sm: 120, md: 'none' },
+                            textOverflow: 'ellipsis',
+                            overflow: 'hidden',
+                          }}
+                        >
                           {active.display_name}
                         </Typography>
                         <Chip
                           label={badge.label}
                           size="small"
                           sx={{
-                            fontSize: '0.65rem',
+                            display: { xs: 'none', sm: 'inline-flex' },
+                            fontSize: '0.625rem',
                             height: 18,
                             bgcolor: badge.bg,
                             color: badge.text,
@@ -156,11 +247,21 @@ export const Navbar = () => {
                           }}
                         />
                       </Box>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', display: 'block', noWrap: true, mt: 0.2 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: '0.68rem',
+                          lineHeight: 1.2,
+                          display: { xs: 'none', md: 'block' },
+                          noWrap: true,
+                          mt: 0.2,
+                        }}
+                      >
                         {active.title} {active.client_name ? `• ${active.client_name}` : active.department_name ? `• ${active.department_name}` : ''}
                       </Typography>
                     </Box>
-                  </Stack>
+                  </Box>
                 )
               }}
             >
@@ -211,20 +312,25 @@ export const Navbar = () => {
             </Select>
           </FormControl>
 
-          {/* Dark / Light Mode Toggle Button */}
+          {/* 3. Dark / Light Mode Toggle Button (Later / Right) */}
           <Tooltip title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
             <IconButton
               onClick={toggleColorMode}
               size="small"
               sx={{
-                p: 1,
-                borderRadius: 2,
+                width: { xs: 38, sm: 42 },
+                height: { xs: 38, sm: 42 },
+                borderRadius: 2.5,
                 border: `1px solid ${theme.palette.divider}`,
                 bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
                 color: isDark ? '#FBBF24' : '#475569',
                 '&:hover': {
                   bgcolor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E2E8F0',
                 },
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box',
               }}
             >
               {isDark ? <LightModeOutlinedIcon fontSize="small" /> : <DarkModeOutlinedIcon fontSize="small" />}

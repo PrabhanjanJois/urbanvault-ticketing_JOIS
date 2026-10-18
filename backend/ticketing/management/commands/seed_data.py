@@ -143,6 +143,12 @@ class Command(BaseCommand):
         dept_it.poc = dept_abdul
         dept_it.save()
 
+        dept_elec.poc = dept_dhananjaya
+        dept_elec.save()
+
+        dept_hk.poc = dept_dhananjaya
+        dept_hk.save()
+
         # 3. Properties
         prop_harness_1317, _ = Property.objects.get_or_create(
             name="Harness-1317",

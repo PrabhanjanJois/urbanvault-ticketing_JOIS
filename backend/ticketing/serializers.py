@@ -41,12 +41,14 @@ class WorkerUserSerializer(serializers.ModelSerializer):
 class TicketActivitySerializer(serializers.ModelSerializer):
     actor_name = serializers.SerializerMethodField()
     actor_initials = serializers.SerializerMethodField()
+    comment_content = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = TicketActivity
         fields = [
             'id', 'ticket', 'actor', 'actor_name', 'actor_initials',
-            'action_type', 'description', 'metadata', 'created_at'
+            'action_type', 'description', 'metadata', 'comment_content', 'image_url', 'created_at'
         ]
 
     def get_actor_name(self, obj):
@@ -59,6 +61,24 @@ class TicketActivitySerializer(serializers.ModelSerializer):
             return obj.actor.avatar_initials
         return "S"
 
+    def get_comment_content(self, obj):
+        if obj.action_type == ActivityActionType.COMMENT_ADDED or obj.action_type == 'COMMENT_ADDED':
+            if obj.metadata and 'content' in obj.metadata:
+                return obj.metadata['content']
+            comment_id = obj.metadata.get('comment_id') if obj.metadata else None
+            if comment_id:
+                comment = TicketComment.objects.filter(id=comment_id).first()
+                if comment:
+                    return comment.content
+        return None
+
+    def get_image_url(self, obj):
+        if getattr(obj, 'image_url', None):
+            return obj.image_url
+        if obj.metadata and 'image_url' in obj.metadata:
+            return obj.metadata['image_url']
+        return ''
+
 
 class TicketCommentSerializer(serializers.ModelSerializer):
     author_name = serializers.CharField(source='author.display_name', read_only=True)
@@ -69,7 +89,7 @@ class TicketCommentSerializer(serializers.ModelSerializer):
         model = TicketComment
         fields = [
             'id', 'ticket', 'author', 'author_name', 'author_initials',
-            'author_role', 'content', 'created_at'
+            'author_role', 'content', 'image_url', 'created_at'
         ]
         read_only_fields = ['id', 'ticket', 'author', 'created_at']
 
@@ -93,6 +113,8 @@ class TicketListSerializer(serializers.ModelSerializer):
             'ticket_number',
             'title',
             'description',
+            'ac_unit_number',
+            'image_url',
             'status',
             'status_display',
             'client',
@@ -171,16 +193,17 @@ class TicketCreateSerializer(serializers.Serializer):
     )
     title = serializers.CharField(max_length=255)
     description = serializers.CharField(required=False, allow_blank=True, default='')
+    ac_unit_number = serializers.CharField(max_length=64, required=False, allow_blank=True, default='')
+    image_url = serializers.CharField(max_length=500, required=False, allow_blank=True, default='')
 
     def validate(self, attrs):
         user = self.context['request'].user
-        if user.role == UserRole.CLIENT_POC:
-            if not user.client:
-                raise serializers.ValidationError("Authenticated Client POC is not associated with any client entity.")
-            attrs['client'] = user.client
-        else:
-            if not attrs.get('client'):
-                raise serializers.ValidationError({"client": "Client is required for internal staff creating a ticket."})
+        client = attrs.get('client')
+        if not client:
+            if user.role == UserRole.CLIENT_POC and user.client:
+                attrs['client'] = user.client
+            else:
+                raise serializers.ValidationError({"client": "Client is required."})
 
         # Infer department if not explicitly chosen based on title keywords
         if not attrs.get('department'):
@@ -235,7 +258,9 @@ class SubmitAssessmentSerializer(serializers.Serializer):
         ]
     )
     notes = serializers.CharField(required=False, allow_blank=True, default='')
+    image_url = serializers.CharField(max_length=500, required=False, allow_blank=True, default='')
 
 
 class AddCommentSerializer(serializers.Serializer):
     content = serializers.CharField(required=True, min_length=1)
+    image_url = serializers.CharField(max_length=500, required=False, allow_blank=True, default='')

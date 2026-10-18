@@ -113,6 +113,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework
@@ -145,6 +148,18 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+def _is_redis_available():
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.1)
+        res = s.connect_ex(('127.0.0.1', 6379))
+        s.close()
+        return res == 0
+    except Exception:
+        return False
+
+
 # Redis & Celery Settings
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
@@ -154,9 +169,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-# When running in test mode or if explicitly requested, execute tasks eagerly
+# When running in test mode or if Redis is not running locally, execute tasks eagerly in-memory
 IS_TESTING = 'pytest' in sys.modules or 'test' in sys.argv
-CELERY_TASK_ALWAYS_EAGER = IS_TESTING or os.environ.get('CELERY_ALWAYS_EAGER', 'False').lower() in ('true', '1')
+REDIS_ACTIVE = _is_redis_available() if 'REDIS_URL' not in os.environ else True
+CELERY_TASK_ALWAYS_EAGER = IS_TESTING or (not REDIS_ACTIVE) or os.environ.get('CELERY_ALWAYS_EAGER', 'False').lower() in ('true', '1')
 CELERY_TASK_EAGER_PROPAGATES = True
 
 # Cache configuration

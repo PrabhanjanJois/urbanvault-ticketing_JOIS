@@ -42,7 +42,7 @@ export const TicketsDashboard = () => {
   const { user } = useAuth()
   const { mode } = useColorMode()
   const isDark = mode === 'dark'
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   // State
   const [activeTab, setActiveTab] = useState('open') // 'open' | 'closed'
@@ -196,29 +196,33 @@ export const TicketsDashboard = () => {
           </Box>
         </Box>
 
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<AddIcon sx={{ fontSize: 18 }} />}
-          onClick={() => setCreateModalOpen(true)}
-          sx={{
-            ml: { sm: 'auto' },
-            bgcolor: isDark ? '#2563EB' : '#0F172A',
-            '&:hover': { bgcolor: isDark ? '#1D4ED8' : '#1E293B' },
-            px: 2.5,
-            py: 0.7,
-            height: 36,
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            borderRadius: 2,
-            textTransform: 'none',
-            boxShadow: isDark ? '0 2px 10px rgba(37, 99, 235, 0.3)' : '0 2px 8px rgba(15, 23, 42, 0.12)',
-            transition: 'all 0.15s ease-in-out',
-            flexShrink: 0,
-          }}
-        >
-          Create New Ticket
-        </Button>
+        {user?.role !== 'TECHNICIAN' && (
+          <Button
+            id="tour-create-ticket-btn"
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon sx={{ fontSize: 18 }} />}
+            onClick={() => setCreateModalOpen(true)}
+            sx={{
+              ml: { sm: 'auto' },
+              width: { xs: '100%', sm: 'auto' },
+              bgcolor: isDark ? '#2563EB' : '#0F172A',
+              '&:hover': { bgcolor: isDark ? '#1D4ED8' : '#1E293B' },
+              px: 2.5,
+              py: 0.7,
+              height: 38,
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              borderRadius: 2,
+              textTransform: 'none',
+              boxShadow: isDark ? '0 2px 10px rgba(37, 99, 235, 0.3)' : '0 2px 8px rgba(15, 23, 42, 0.12)',
+              transition: 'all 0.15s ease-in-out',
+              flexShrink: 0,
+            }}
+          >
+            Create New Ticket
+          </Button>
+        )}
       </Box>
 
       {/* Main Two-Panel Layout (Left: Master List, Right: Detail Pane) */}
@@ -234,13 +238,13 @@ export const TicketsDashboard = () => {
         {/* Left Column: Tickets Master List */}
         <Box
           sx={{
-            width: { xs: '100%', sm: '450px', md: '490px', lg: '530px' },
-            minWidth: { sm: '420px' },
+            width: { xs: '100%', md: '380px', lg: '430px', xl: '470px' },
             flexShrink: 0,
           }}
         >
           {/* Controls & Tabs Panel */}
           <Paper
+            id="tour-search-filters"
             elevation={0}
             sx={{
               p: 2,
@@ -251,7 +255,7 @@ export const TicketsDashboard = () => {
             }}
           >
             {/* Tabs: Open Tickets & Closed Tickets with live counts */}
-            <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, mb: 1.5 }}>
+            <Box id="tour-queue-tabs" sx={{ borderBottom: `1px solid ${theme.palette.divider}`, mb: 1.5 }}>
               <Tabs
                 value={activeTab}
                 onChange={(e, val) => {
@@ -298,8 +302,8 @@ export const TicketsDashboard = () => {
               sx={{ mb: 1.5 }}
             />
 
-            {/* Filter Controls: Clean 2x2 Grid Layout */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.2 }}>
+            {/* Filter Controls: Clean Responsive Grid Layout */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.2 }}>
               {/* Client Filter */}
               <FormControl size="small" fullWidth>
                 <InputLabel sx={{ fontSize: '0.8rem' }}>Client</InputLabel>
@@ -432,7 +436,7 @@ export const TicketsDashboard = () => {
               )}
             </Paper>
           ) : (
-            <Box sx={{ maxHeight: { sm: 'calc(100vh - 220px)' }, overflowY: { sm: 'auto' }, pr: { sm: 0.5 } }}>
+            <Box id="tour-ticket-list" sx={{ maxHeight: { sm: 'calc(100vh - 220px)' }, overflowY: { sm: 'auto' }, pr: { sm: 0.5 } }}>
               {tickets.map((t) => (
                 <TicketCard
                   key={t.id}
@@ -470,6 +474,7 @@ export const TicketsDashboard = () => {
         {/* Right Column: Ticket Detail Pane (Side-by-side split view) */}
         {!isMobile && (
           <Box
+            id="tour-ticket-detail"
             sx={{
               flex: 1,
               minWidth: 0,
@@ -488,7 +493,7 @@ export const TicketsDashboard = () => {
         )}
       </Box>
 
-      {/* Mobile Drawer/Modal for Ticket Details */}
+      {/* Mobile & Tablet Modal for Ticket Details */}
       {isMobile && (
         <Dialog
           open={mobileDetailOpen}
@@ -497,18 +502,37 @@ export const TicketsDashboard = () => {
           maxWidth="md"
           PaperProps={{
             sx: {
-              height: '90vh',
-              maxHeight: '90vh',
-              borderRadius: 3,
+              height: { xs: '100%', sm: '90vh' },
+              maxHeight: { xs: '100%', sm: '90vh' },
+              borderRadius: { xs: 0, sm: 3 },
+              m: { xs: 0, sm: 2 },
             },
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, bgcolor: theme.palette.background.paper }}>
-            <IconButton onClick={() => setMobileDetailOpen(false)} size="small">
-              <CloseIcon />
-            </IconButton>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 2,
+              py: 1,
+              bgcolor: theme.palette.background.paper,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.8rem' }}>
+              Ticket Details
+            </Typography>
+            <Button
+              onClick={() => setMobileDetailOpen(false)}
+              size="small"
+              startIcon={<CloseIcon fontSize="small" />}
+              sx={{ fontWeight: 700, textTransform: 'none', color: 'text.primary', borderRadius: 2 }}
+            >
+              Back to List
+            </Button>
           </Box>
-          <DialogContent sx={{ p: 0, height: '100%' }}>
+          <DialogContent sx={{ p: 0, height: 'calc(100% - 48px)', overflow: 'hidden' }}>
             <TicketDetailPane
               ticketId={selectedTicketId}
               onTicketUpdated={() => {

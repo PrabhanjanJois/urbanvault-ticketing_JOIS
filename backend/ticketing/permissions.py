@@ -48,8 +48,12 @@ class CanManageTicketAction(permissions.BasePermission):
             return True
 
         if user.role == UserRole.DEPARTMENT_POC:
-            # Department POC can access tickets for their department
-            return obj.department_id == user.department_id or obj.assigned_to_id == user.id
+            # Department POC can access tickets for their department, assigned to them, or created by them
+            return (
+                obj.department_id == user.department_id or
+                obj.assigned_to_id == user.id or
+                obj.created_by_id == user.id
+            )
 
         if user.role == UserRole.TECHNICIAN:
             # Technician can view tickets assigned to them or in their department

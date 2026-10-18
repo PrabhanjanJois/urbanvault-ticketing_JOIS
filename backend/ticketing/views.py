@@ -2,6 +2,7 @@ import logging
 import uuid
 from django.db import transaction, models
 from django.utils import timezone
+from django.core.files.storage import default_storage
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -25,10 +26,23 @@ logger = logging.getLogger('ticketing')
 
 
 def generate_ticket_number():
-    """Generates a human-friendly ticket identifier, e.g. TKT-1042 or random sequence."""
-    last_ticket = Ticket.objects.order_by('-id').first()
-    next_id = (last_ticket.id + 1040) if last_ticket else 1042
-    return f"TKT-{next_id}"
+    """Generates a unique, human-friendly ticket identifier, e.g. TKT-1053, TKT-1054."""
+    import re
+    highest = 1041
+    existing_numbers = Ticket.objects.filter(ticket_number__startswith="TKT-").values_list('ticket_number', flat=True)
+    for num in existing_numbers:
+        match = re.search(r'(\d+)', num)
+        if match:
+            try:
+                val = int(match.group(1))
+                if val > highest:
+                    highest = val
+            except ValueError:
+                pass
+    candidate = highest + 1
+    while Ticket.objects.filter(ticket_number=f"TKT-{candidate}").exists():
+        candidate += 1
+    return f"TKT-{candidate}"
 
 
 class TicketViewSet(viewsets.ModelViewSet):
@@ -66,7 +80,13 @@ class TicketViewSet(viewsets.ModelViewSet):
                     qs = qs.filter(property_id__in=managed_prop_ids)
             elif user.role == UserRole.DEPARTMENT_POC:
                 if user.department_id:
-                    qs = qs.filter(models.Q(department_id=user.department_id) | models.Q(assigned_to=user))
+                    qs = qs.filter(
+                        models.Q(department_id=user.department_id) |
+                        models.Q(assigned_to=user) |
+                        models.Q(created_by=user)
+                    )
+                else:
+                    qs = qs.filter(models.Q(assigned_to=user) | models.Q(created_by=user))
             elif user.role == UserRole.TECHNICIAN:
                 if user.department_id:
                     qs = qs.filter(models.Q(assigned_to=user) | models.Q(department_id=user.department_id))
@@ -161,16 +181,23 @@ class TicketViewSet(viewsets.ModelViewSet):
         - Adds 2 immutable Audit Log events: 1) Created, 2) Auto-assigned
         - Dispatches Celery async notification
         """
+        user = request.user
+        if user.role == UserRole.TECHNICIAN:
+            return Response(
+                {"detail": "Technicians are not authorized to create tickets."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = TicketCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
-        user = request.user
         validated = serializer.validated_data
         client = validated['client']
         department = validated['department']
         floors = validated['floors']
         title = validated['title']
         description = validated.get('description', '')
+        ac_unit_number = validated.get('ac_unit_number', '').strip()
 
         # Property is determined by client's property
         ticket_property = client.property
@@ -188,20 +215,29 @@ class TicketViewSet(viewsets.ModelViewSet):
             assigned_to=dept_poc,
             title=title,
             description=description,
+            ac_unit_number=ac_unit_number,
+            image_url=validated.get('image_url', '').strip(),
             status=TicketStatus.PENDING_TECHNICIAN_ASSIGNMENT,
         )
 
         # Activity Event 1: User created the ticket
+        create_meta = {
+            "client": client.name,
+            "floors": floors,
+            "title": title
+        }
+        if ac_unit_number:
+            create_meta["ac_unit_number"] = ac_unit_number
+        if ticket.image_url:
+            create_meta["image_url"] = ticket.image_url
+
         TicketActivity.objects.create(
             ticket=ticket,
             actor=user,
             action_type=ActivityActionType.CREATED,
             description=f"{user.display_name} created the ticket.",
-            metadata={
-                "client": client.name,
-                "floors": floors,
-                "title": title
-            }
+            image_url=ticket.image_url,
+            metadata=create_meta
         )
 
         # Activity Event 2: System auto-assigned the ticket
@@ -410,18 +446,24 @@ class TicketViewSet(viewsets.ModelViewSet):
         ticket.status = new_status
         ticket.save()
 
+        image_url = serializer.validated_data.get('image_url', '').strip()
+        assessment_meta = {
+            "old_status": old_status,
+            "new_status": new_status,
+            "assessment_type": assessment_type,
+            "notes": notes
+        }
+        if image_url:
+            assessment_meta["image_url"] = image_url
+
         # Activity log event
         TicketActivity.objects.create(
             ticket=ticket,
             actor=user,
             action_type=action_type,
             description=f"{user.display_name} changed status of the ticket.",
-            metadata={
-                "old_status": old_status,
-                "new_status": new_status,
-                "assessment_type": assessment_type,
-                "notes": notes
-            }
+            image_url=image_url,
+            metadata=assessment_meta
         )
 
         if notes:
@@ -465,19 +507,31 @@ class TicketViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        notes = request.data.get('notes', '').strip()
+        image_url = request.data.get('image_url', '').strip()
+
         old_status = ticket.status
         ticket.status = TicketStatus.RESOLVED
+        if image_url and not ticket.image_url:
+            ticket.image_url = image_url
         ticket.save()
+
+        res_meta = {
+            "old_status": old_status,
+            "new_status": TicketStatus.RESOLVED
+        }
+        if notes:
+            res_meta["notes"] = notes
+        if image_url:
+            res_meta["image_url"] = image_url
 
         TicketActivity.objects.create(
             ticket=ticket,
             actor=user,
             action_type=ActivityActionType.RESOLVED,
             description=f"{user.display_name} marked ticket as resolved.",
-            metadata={
-                "old_status": old_status,
-                "new_status": TicketStatus.RESOLVED
-            }
+            image_url=image_url,
+            metadata=res_meta
         )
 
         logger.info(f"Ticket {ticket.ticket_number} marked resolved by {user.username}")
@@ -494,19 +548,26 @@ class TicketViewSet(viewsets.ModelViewSet):
         serializer = AddCommentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        image_url = serializer.validated_data.get('image_url', '').strip()
         comment = TicketComment.objects.create(
             ticket=ticket,
             author=request.user,
-            content=serializer.validated_data['content']
+            content=serializer.validated_data['content'],
+            image_url=image_url
         )
 
         # Add light audit entry for comment
+        comment_meta = {"comment_id": comment.id, "content": comment.content}
+        if image_url:
+            comment_meta["image_url"] = image_url
+
         TicketActivity.objects.create(
             ticket=ticket,
             actor=request.user,
             action_type=ActivityActionType.COMMENT_ADDED,
             description=f"{request.user.display_name} posted a comment.",
-            metadata={"comment_id": comment.id}
+            image_url=image_url,
+            metadata=comment_meta
         )
 
         return Response(TicketCommentSerializer(comment).data, status=status.HTTP_201_CREATED)
@@ -525,11 +586,7 @@ class AuxiliaryDataView(APIView):
         departments_qs = Department.objects.select_related('poc').all()
         properties_qs = Property.objects.select_related('facility_manager').all()
 
-        # If client POC, provide their own client floors
-        if user.role == UserRole.CLIENT_POC and user.client:
-            clients_data = [ClientSerializer(user.client).data]
-        else:
-            clients_data = ClientSerializer(clients_qs, many=True).data
+        clients_data = ClientSerializer(clients_qs, many=True).data
 
         departments_data = DepartmentSerializer(departments_qs, many=True).data
         properties_data = PropertySerializer(properties_qs, many=True).data
@@ -553,3 +610,36 @@ class AuxiliaryDataView(APIView):
             "technicians": technicians_data,
             "quick_issues": quick_issues,
         })
+
+
+class FileUploadView(APIView):
+    """
+    Accepts multipart/form-data upload with a 'file' parameter,
+    stores it in MEDIA_ROOT/attachments, and returns the public media URL.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        upload = request.FILES.get('file')
+        if not upload:
+            return Response({"detail": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 10MB limit
+        if upload.size > 10 * 1024 * 1024:
+            return Response({"detail": "File size exceeds 10MB limit."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate unique safe filename
+        safe_name = f"{uuid.uuid4().hex[:12]}_{upload.name.replace(' ', '_')}"
+        save_path = f"attachments/{safe_name}"
+
+        saved_path = default_storage.save(save_path, upload)
+        file_url = f"/media/{saved_path}"
+
+        logger.info(f"File uploaded by {request.user.username}: {file_url} ({upload.size} bytes)")
+
+        return Response({
+            "file_url": file_url,
+            "file_name": upload.name,
+            "file_size": upload.size,
+        }, status=status.HTTP_201_CREATED)
+
