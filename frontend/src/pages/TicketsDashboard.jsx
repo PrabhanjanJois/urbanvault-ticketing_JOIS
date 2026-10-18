@@ -48,6 +48,7 @@ export const TicketsDashboard = () => {
   const [activeTab, setActiveTab] = useState('open') // 'open' | 'closed'
   const [tickets, setTickets] = useState([])
   const [totalCount, setTotalCount] = useState(0)
+  const [tabCounts, setTabCounts] = useState({ open: 0, closed: 0 })
   const [page, setPage] = useState(1)
   const [pageSize] = useState(10)
   const [loading, setLoading] = useState(false)
@@ -97,6 +98,9 @@ export const TicketsDashboard = () => {
       const results = res.data.results || []
       setTickets(results)
       setTotalCount(res.data.count || 0)
+      if (res.data.open_count !== undefined && res.data.closed_count !== undefined) {
+        setTabCounts({ open: res.data.open_count, closed: res.data.closed_count })
+      }
 
       // Auto-select first ticket if current selected ticket is not in results
       if (results.length > 0) {
@@ -205,13 +209,8 @@ export const TicketsDashboard = () => {
               bgcolor: theme.palette.background.paper,
             }}
           >
-            {/* Tabs: Open Tickets & Closed Tickets */}
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ borderBottom: `1px solid ${theme.palette.divider}`, pb: 1, mb: 1.5 }}
-            >
+            {/* Tabs: Open Tickets & Closed Tickets with live counts */}
+            <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, mb: 1.5 }}>
               <Tabs
                 value={activeTab}
                 onChange={(e, val) => {
@@ -221,33 +220,21 @@ export const TicketsDashboard = () => {
                 textColor="primary"
                 indicatorColor="primary"
                 sx={{
-                  minHeight: 36,
+                  minHeight: 38,
                   '& .MuiTab-root': {
                     fontWeight: 700,
                     fontSize: '0.875rem',
-                    minHeight: 36,
+                    minHeight: 38,
                     py: 0.5,
                     px: 1.5,
                     textTransform: 'none',
                   },
                 }}
               >
-                <Tab label="Open Tickets" value="open" />
-                <Tab label="Closed Tickets" value="closed" />
+                <Tab label={`Open Tickets (${tabCounts.open})`} value="open" />
+                <Tab label={`Closed Tickets (${tabCounts.closed})`} value="closed" />
               </Tabs>
-
-              <Chip
-                label={`${totalCount} Tickets`}
-                size="small"
-                sx={{
-                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.06)' : '#F1F5F9',
-                  color: 'text.secondary',
-                  fontWeight: 700,
-                  fontSize: '0.7rem',
-                  height: 22,
-                }}
-              />
-            </Stack>
+            </Box>
 
             {/* Search Bar matching Wireframe */}
             <TextField

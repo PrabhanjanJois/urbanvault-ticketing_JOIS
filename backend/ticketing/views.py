@@ -43,7 +43,7 @@ class TicketViewSet(viewsets.ModelViewSet):
             return TicketDetailSerializer
         return TicketListSerializer
 
-    def get_queryset(self):
+    def _get_base_scoped_queryset(self):
         user = self.request.user
         qs = Ticket.objects.select_related(
             'client',
@@ -61,7 +61,6 @@ class TicketViewSet(viewsets.ModelViewSet):
             if user.role == UserRole.CLIENT_POC:
                 qs = qs.filter(client_id=user.client_id)
             elif user.role == UserRole.FACILITY_MANAGER:
-                # If assigned to specific properties, filter; otherwise keep accessible
                 managed_prop_ids = Property.objects.filter(facility_manager=user).values_list('id', flat=True)
                 if managed_prop_ids:
                     qs = qs.filter(property_id__in=managed_prop_ids)
@@ -69,31 +68,19 @@ class TicketViewSet(viewsets.ModelViewSet):
                 if user.department_id:
                     qs = qs.filter(models.Q(department_id=user.department_id) | models.Q(assigned_to=user))
             elif user.role == UserRole.TECHNICIAN:
-                # Technician sees tickets assigned to him or unassigned in his department
                 if user.department_id:
                     qs = qs.filter(models.Q(assigned_to=user) | models.Q(department_id=user.department_id))
                 else:
                     qs = qs.filter(assigned_to=user)
 
-        # 2. Filter by Open/Closed tabs (only applies to list action)
-        if self.action == 'list':
-            tab = self.request.query_params.get('tab', 'open').lower()
-            if tab == 'open':
-                qs = qs.filter(status__in=[
-                    TicketStatus.PENDING_TECHNICIAN_ASSIGNMENT,
-                    TicketStatus.PENDING_TECHNICIAN_ASSESSMENT,
-                    TicketStatus.PENDING_DEPARTMENT_REVIEW,
-                ])
-            elif tab == 'closed':
-                qs = qs.filter(status__in=[
-                    TicketStatus.RESOLVED,
-                    TicketStatus.CLOSED,
-                ])
-
-        # 3. Dynamic filters
-        status_param = self.request.query_params.get('status')
-        if status_param:
-            qs = qs.filter(status=status_param)
+        # Apply base filters (search, client, department, facility manager)
+        search_query = self.request.query_params.get('search')
+        if search_query:
+            qs = qs.filter(
+                models.Q(title__icontains=search_query) |
+                models.Q(description__icontains=search_query) |
+                models.Q(ticket_number__icontains=search_query)
+            )
 
         client_param = self.request.query_params.get('client')
         if client_param:
@@ -113,14 +100,30 @@ class TicketViewSet(viewsets.ModelViewSet):
         if fm_param and fm_param.isdigit():
             qs = qs.filter(property__facility_manager_id=int(fm_param))
 
-        # 4. Search by ticket number, title, or description
-        search_query = self.request.query_params.get('search')
-        if search_query:
-            qs = qs.filter(
-                models.Q(title__icontains=search_query) |
-                models.Q(description__icontains=search_query) |
-                models.Q(ticket_number__icontains=search_query)
-            )
+        return qs
+
+    def get_queryset(self):
+        qs = self._get_base_scoped_queryset()
+
+        # 2. Filter by Open/Closed tabs (only applies to list action)
+        if self.action == 'list':
+            tab = self.request.query_params.get('tab', 'open').lower()
+            if tab == 'open':
+                qs = qs.filter(status__in=[
+                    TicketStatus.PENDING_TECHNICIAN_ASSIGNMENT,
+                    TicketStatus.PENDING_TECHNICIAN_ASSESSMENT,
+                    TicketStatus.PENDING_DEPARTMENT_REVIEW,
+                ])
+            elif tab == 'closed':
+                qs = qs.filter(status__in=[
+                    TicketStatus.RESOLVED,
+                    TicketStatus.CLOSED,
+                ])
+
+        # Status filter
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
 
         # 5. Sorting (Newest First / Oldest First)
         ordering = self.request.query_params.get('ordering', '-created_at')
@@ -130,6 +133,24 @@ class TicketViewSet(viewsets.ModelViewSet):
             qs = qs.order_by('-created_at')
 
         return qs
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        base_qs = self._get_base_scoped_queryset()
+        open_count = base_qs.filter(status__in=[
+            TicketStatus.PENDING_TECHNICIAN_ASSIGNMENT,
+            TicketStatus.PENDING_TECHNICIAN_ASSESSMENT,
+            TicketStatus.PENDING_DEPARTMENT_REVIEW,
+        ]).count()
+        closed_count = base_qs.filter(status__in=[
+            TicketStatus.RESOLVED,
+            TicketStatus.CLOSED,
+        ]).count()
+
+        if isinstance(response.data, dict):
+            response.data['open_count'] = open_count
+            response.data['closed_count'] = closed_count
+        return response
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):

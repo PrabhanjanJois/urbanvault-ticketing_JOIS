@@ -137,26 +137,29 @@ export const Navbar = () => {
                     >
                       {active.avatar_initials}
                     </Avatar>
-                    <Box sx={{ textAlign: 'left', minWidth: 0 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.2, color: 'text.primary', noWrap: true }}>
-                        {active.display_name}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', display: 'block', noWrap: true }}>
+                    <Box sx={{ textAlign: 'left', minWidth: 0, mr: 0.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.2, color: 'text.primary', noWrap: true }}>
+                          {active.display_name}
+                        </Typography>
+                        <Chip
+                          label={badge.label}
+                          size="small"
+                          sx={{
+                            fontSize: '0.65rem',
+                            height: 18,
+                            bgcolor: badge.bg,
+                            color: badge.text,
+                            fontWeight: 700,
+                            borderRadius: '5px',
+                            '& .MuiChip-label': { px: 0.6, py: 0 },
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', display: 'block', noWrap: true, mt: 0.2 }}>
                         {active.title} {active.client_name ? `• ${active.client_name}` : active.department_name ? `• ${active.department_name}` : ''}
                       </Typography>
                     </Box>
-                    <Chip
-                      label={badge.label}
-                      size="small"
-                      sx={{
-                        fontSize: '0.65rem',
-                        height: 20,
-                        bgcolor: badge.bg,
-                        color: badge.text,
-                        fontWeight: 700,
-                        ml: 0.5,
-                      }}
-                    />
                   </Stack>
                 )
               }}
@@ -179,24 +182,28 @@ export const Navbar = () => {
                         {p.avatar_initials}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, noWrap: true, fontSize: '0.85rem' }}>
-                          {p.display_name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', noWrap: true, fontSize: '0.725rem' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, noWrap: true, fontSize: '0.85rem' }}>
+                            {p.display_name}
+                          </Typography>
+                          <Chip
+                            label={badge.label}
+                            size="small"
+                            sx={{
+                              fontSize: '0.65rem',
+                              height: 18,
+                              bgcolor: badge.bg,
+                              color: badge.text,
+                              fontWeight: 700,
+                              borderRadius: '5px',
+                              '& .MuiChip-label': { px: 0.6, py: 0 },
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', noWrap: true, fontSize: '0.725rem', mt: 0.2 }}>
                           {p.title} {p.client_name ? `• ${p.client_name}` : p.department_name ? `• ${p.department_name}` : ''}
                         </Typography>
                       </Box>
-                      <Chip
-                        label={badge.label}
-                        size="small"
-                        sx={{
-                          fontSize: '0.65rem',
-                          height: 20,
-                          bgcolor: badge.bg,
-                          color: badge.text,
-                          fontWeight: 700,
-                        }}
-                      />
                     </Stack>
                   </MenuItem>
                 )
