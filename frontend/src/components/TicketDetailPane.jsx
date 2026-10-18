@@ -677,7 +677,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                   {ticket.status === 'PENDING_TECHNICIAN_ASSIGNMENT' ? (
                     <>
                       <Chip
-                        label="Awaiting Assignment"
+                        label="Pending Manager Approval"
                         size="small"
                         sx={{
                           height: 24,
@@ -700,7 +700,7 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                           m: 0,
                         }}
                       >
-                        Department Manager ({ticket.assigned_to_name || 'Technical Manager'}) is reviewing this ticket. Once assigned to you, action will be required.
+                        Department Manager ({ticket.assigned_to_name || 'Technical Manager'}) has to approve. Once approved, action will be required.
                       </Typography>
                     </>
                   ) : ticket.status === 'PENDING_DEPARTMENT_REVIEW' ? (
