@@ -42,7 +42,7 @@ export const TicketsDashboard = () => {
   const { user } = useAuth()
   const { mode } = useColorMode()
   const isDark = mode === 'dark'
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   // State
   const [activeTab, setActiveTab] = useState('open') // 'open' | 'closed'
@@ -213,12 +213,23 @@ export const TicketsDashboard = () => {
         >
           Create New Ticket
         </Button>
-      </Stack>
-
-      {/* Main Two-Panel Layout (Left: Master List, Right: Detail Pane) */}
-      <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
+      </Stack>      {/* Main Two-Panel Layout (Left: Master List, Right: Detail Pane) */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 3,
+          alignItems: 'flex-start',
+          width: '100%',
+        }}
+      >
         {/* Left Column: Tickets Master List */}
-        <Grid item xs={12} md={5} lg={5}>
+        <Box
+          sx={{
+            width: { xs: '100%', sm: '350px', md: '390px', lg: '420px' },
+            flexShrink: 0,
+          }}
+        >
           {/* Controls & Tabs Panel */}
           <Paper
             elevation={0}
@@ -347,7 +358,7 @@ export const TicketsDashboard = () => {
                   sx={{ fontSize: '0.8rem' }}
                 >
                   <MenuItem value="-created_at" sx={{ fontSize: '0.8rem' }}>Newest First</MenuItem>
-                  <MenuItem value="created_at" sx={{ fontSize: '0.8rem' }}>Older First</MenuItem>
+                  <MenuItem value="created_at" sx={{ fontSize: '0.8rem' }}>Oldest First</MenuItem>
                 </Select>
               </FormControl>
 
@@ -368,7 +379,7 @@ export const TicketsDashboard = () => {
             </Stack>
           </Paper>
 
-          {/* Cards List Section */}
+          {/* Cards List Section with scroll container */}
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
@@ -409,7 +420,7 @@ export const TicketsDashboard = () => {
               )}
             </Paper>
           ) : (
-            <Box sx={{ maxHeight: { md: 'calc(100vh - 220px)' }, overflowY: { md: 'auto' }, pr: { md: 1 } }}>
+            <Box sx={{ maxHeight: { sm: 'calc(100vh - 220px)' }, overflowY: { sm: 'auto' }, pr: { sm: 0.5 } }}>
               {tickets.map((t) => (
                 <TicketCard
                   key={t.id}
@@ -442,18 +453,28 @@ export const TicketsDashboard = () => {
               )}
             </Box>
           )}
-        </Grid>
+        </Box>
 
-        {/* Right Column: Ticket Detail Pane (Wireframe Accurate Desktop Split Layout) */}
+        {/* Right Column: Ticket Detail Pane (Side-by-side split view) */}
         {!isMobile && (
-          <Grid item md={7} lg={7} sx={{ position: 'sticky', top: 80, height: 'calc(100vh - 120px)' }}>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              width: '100%',
+              position: { sm: 'sticky' },
+              top: 80,
+              maxHeight: { sm: 'calc(100vh - 100px)' },
+              overflowY: { sm: 'auto' },
+            }}
+          >
             <TicketDetailPane
               ticketId={selectedTicketId}
               onTicketUpdated={() => fetchTickets()}
             />
-          </Grid>
+          </Box>
         )}
-      </Grid>
+      </Box>
 
       {/* Mobile Drawer/Modal for Ticket Details */}
       {isMobile && (
