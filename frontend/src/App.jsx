@@ -9,9 +9,9 @@ function App() {
   return (
     <ColorModeProvider>
       <AuthProvider>
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ minHeight: '100vh', width: '100%', maxWidth: '100%', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
           <Navbar />
-          <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Box component="main" sx={{ flex: 1, width: '100%', maxWidth: '100%', display: 'flex', flexDirection: 'column' }}>
             <TicketsDashboard />
           </Box>
         </Box>

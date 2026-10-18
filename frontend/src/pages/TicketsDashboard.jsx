@@ -171,16 +171,20 @@ export const TicketsDashboard = () => {
   const totalPages = Math.ceil(totalCount / pageSize) || 1
 
   return (
-    <Box sx={{ flex: 1, py: { xs: 2, sm: 3 }, px: { xs: 2, md: 3, lg: 4 } }}>
-      {/* Top Header Row matching Wireframe */}
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        spacing={2}
-        sx={{ mb: 2.5 }}
+    <Box sx={{ flex: 1, width: '100%', maxWidth: '100%', boxSizing: 'border-box', py: { xs: 2, sm: 3 }, px: { xs: 2, md: 3, lg: 4 } }}>
+      {/* Top Header Row: Title on Left, Create Button at Right End */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          width: '100%',
+          mb: 2.5,
+          gap: 2,
+        }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <ConfirmationNumberOutlinedIcon sx={{ fontSize: 28, color: isDark ? '#60A5FA' : '#0F172A' }} />
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em', fontSize: '1.25rem' }}>
@@ -190,7 +194,7 @@ export const TicketsDashboard = () => {
               Live Workspace Operations Desk • {user?.client_name ? `${user.client_name}` : user?.department_name ? `${user.department_name}` : 'Indiranagar-1317'}
             </Typography>
           </Box>
-        </Stack>
+        </Box>
 
         <Button
           variant="contained"
@@ -198,10 +202,11 @@ export const TicketsDashboard = () => {
           startIcon={<AddIcon sx={{ fontSize: 18 }} />}
           onClick={() => setCreateModalOpen(true)}
           sx={{
+            ml: { sm: 'auto' },
             bgcolor: isDark ? '#2563EB' : '#0F172A',
             '&:hover': { bgcolor: isDark ? '#1D4ED8' : '#1E293B' },
-            px: 2,
-            py: 0.6,
+            px: 2.5,
+            py: 0.7,
             height: 36,
             fontSize: '0.8125rem',
             fontWeight: 600,
@@ -209,11 +214,14 @@ export const TicketsDashboard = () => {
             textTransform: 'none',
             boxShadow: isDark ? '0 2px 10px rgba(37, 99, 235, 0.3)' : '0 2px 8px rgba(15, 23, 42, 0.12)',
             transition: 'all 0.15s ease-in-out',
+            flexShrink: 0,
           }}
         >
           Create New Ticket
         </Button>
-      </Stack>      {/* Main Two-Panel Layout (Left: Master List, Right: Detail Pane) */}
+      </Box>
+
+      {/* Main Two-Panel Layout (Left: Master List, Right: Detail Pane) */}
       <Box
         sx={{
           display: 'flex',
