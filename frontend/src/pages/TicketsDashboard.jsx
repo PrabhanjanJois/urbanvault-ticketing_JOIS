@@ -178,16 +178,21 @@ export const TicketsDashboard = () => {
 
         <Button
           variant="contained"
-          startIcon={<AddIcon />}
+          size="small"
+          startIcon={<AddIcon sx={{ fontSize: 18 }} />}
           onClick={() => setCreateModalOpen(true)}
           sx={{
-            bgcolor: isDark ? '#3B82F6' : '#0F172A',
-            '&:hover': { bgcolor: isDark ? '#2563EB' : '#1E293B' },
-            px: 2.5,
-            py: 1,
-            fontWeight: 700,
+            bgcolor: isDark ? '#2563EB' : '#0F172A',
+            '&:hover': { bgcolor: isDark ? '#1D4ED8' : '#1E293B' },
+            px: 2,
+            py: 0.6,
+            height: 36,
+            fontSize: '0.8125rem',
+            fontWeight: 600,
             borderRadius: 2,
-            boxShadow: isDark ? '0 0 16px rgba(59, 130, 246, 0.3)' : 'none',
+            textTransform: 'none',
+            boxShadow: isDark ? '0 2px 10px rgba(37, 99, 235, 0.3)' : '0 2px 8px rgba(15, 23, 42, 0.12)',
+            transition: 'all 0.15s ease-in-out',
           }}
         >
           Create New Ticket
