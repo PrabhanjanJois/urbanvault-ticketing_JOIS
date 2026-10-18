@@ -402,34 +402,54 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
           >
           {/* CLIENT POC CTA BANNER */}
           {isClient && (
-            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={2}>
-              <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.85rem' }}>
-                {ticket.status === 'RESOLVED'
-                  ? 'Ticket has been resolved.'
-                  : 'Ticket created successfully. If the issue is resolved, you can mark it as resolved.'}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                justifyContent: 'space-between',
+                width: '100%',
+                gap: 2,
+                minHeight: 34,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  lineHeight: '24px',
+                  m: 0,
+                }}
+              >
+                Ticket created successfully. If the issue is resolved, you can mark it as resolved.
               </Typography>
               {canMarkResolved && (
                 <Button
                   variant="contained"
                   color="success"
                   size="small"
-                  startIcon={<CheckCircleOutlinedIcon sx={{ fontSize: 16 }} />}
+                  startIcon={<CheckCircleOutlinedIcon sx={{ fontSize: '1rem !important' }} />}
                   onClick={handleMarkResolved}
                   disabled={actionLoading}
                   sx={{
+                    ml: { sm: 'auto' },
                     fontWeight: 600,
                     fontSize: '0.8125rem',
-                    height: 34,
+                    height: 32,
+                    minHeight: 32,
                     px: 2,
                     textTransform: 'none',
-                    borderRadius: 2,
+                    borderRadius: 1.5,
+                    boxShadow: 'none',
                     flexShrink: 0,
                   }}
                 >
                   Mark Resolved
                 </Button>
               )}
-            </Stack>
+            </Box>
           )}
 
           {/* FACILITY MANAGER BANNER */}
@@ -442,44 +462,72 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
           {/* DEPARTMENT POC CTA BANNER */}
           {isDeptPOC && (
             <Stack spacing={2}>
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                justifyContent="space-between"
-                spacing={2}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  gap: 2,
+                  minHeight: 34,
+                }}
               >
-                <Stack direction="row" alignItems="center" spacing={1.2} flexWrap="wrap">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                   <Chip
                     label="Action Required"
                     size="small"
                     sx={{
-                      height: 22,
-                      fontSize: '0.7rem',
+                      height: 24,
+                      fontSize: '0.725rem',
                       fontWeight: 700,
                       bgcolor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7',
                       color: isDark ? '#FBBF24' : '#B45309',
                       border: isDark ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid #FDE68A',
+                      borderRadius: 1.5,
+                      flexShrink: 0,
                     }}
                   />
-                  <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.85rem' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.primary',
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      lineHeight: '24px',
+                      m: 0,
+                    }}
+                  >
                     A new ticket has been assigned to you. Review it and take the next action.
                   </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1} flexShrink={0} flexWrap="wrap">
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    ml: { sm: 'auto' },
+                    flexShrink: 0,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   {canAssignWorker && (
                     <Button
                       variant={activeActionPanel === 'ASSIGN_WORKER' ? 'contained' : 'outlined'}
                       size="small"
-                      startIcon={<AssignmentIndIcon sx={{ fontSize: 16 }} />}
+                      startIcon={<AssignmentIndIcon sx={{ fontSize: '1rem !important' }} />}
                       onClick={() =>
                         setActiveActionPanel(activeActionPanel === 'ASSIGN_WORKER' ? null : 'ASSIGN_WORKER')
                       }
                       sx={{
                         fontWeight: 600,
                         fontSize: '0.8125rem',
-                        height: 34,
+                        height: 32,
+                        minHeight: 32,
                         textTransform: 'none',
-                        borderRadius: 2,
+                        borderRadius: 1.5,
+                        boxShadow: 'none',
                       }}
                     >
                       Assign Worker
@@ -490,16 +538,18 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                       variant={activeActionPanel === 'CHANGE_DEPT' ? 'contained' : 'outlined'}
                       color="secondary"
                       size="small"
-                      startIcon={<SwapCallsIcon sx={{ fontSize: 16 }} />}
+                      startIcon={<SwapCallsIcon sx={{ fontSize: '1rem !important' }} />}
                       onClick={() =>
                         setActiveActionPanel(activeActionPanel === 'CHANGE_DEPT' ? null : 'CHANGE_DEPT')
                       }
                       sx={{
                         fontWeight: 600,
                         fontSize: '0.8125rem',
-                        height: 34,
+                        height: 32,
+                        minHeight: 32,
                         textTransform: 'none',
-                        borderRadius: 2,
+                        borderRadius: 1.5,
+                        boxShadow: 'none',
                       }}
                     >
                       Change Department
@@ -510,22 +560,24 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                       variant="contained"
                       color="success"
                       size="small"
-                      startIcon={<CheckCircleOutlinedIcon sx={{ fontSize: 16 }} />}
+                      startIcon={<CheckCircleOutlinedIcon sx={{ fontSize: '1rem !important' }} />}
                       onClick={handleMarkResolved}
                       disabled={actionLoading}
                       sx={{
                         fontWeight: 600,
                         fontSize: '0.8125rem',
-                        height: 34,
+                        height: 32,
+                        minHeight: 32,
                         textTransform: 'none',
-                        borderRadius: 2,
+                        borderRadius: 1.5,
+                        boxShadow: 'none',
                       }}
                     >
                       Mark Resolved
                     </Button>
                   )}
-                </Stack>
-              </Stack>
+                </Box>
+              </Box>
 
               {/* Expanded Assign Worker Panel */}
               {activeActionPanel === 'ASSIGN_WORKER' && (

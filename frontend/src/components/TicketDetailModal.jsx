@@ -338,7 +338,7 @@ export const TicketDetailModal = ({ open, ticketId, onClose, onTicketUpdated }) 
                       startIcon={<CheckCircleOutlinedIcon />}
                       onClick={handleMarkResolved}
                       disabled={actionLoading}
-                      sx={{ fontWeight: 700, px: 2 }}
+                      sx={{ fontWeight: 700, px: 2, ml: { sm: 'auto' } }}
                     >
                       Mark Resolved
                     </Button>
@@ -365,7 +365,7 @@ export const TicketDetailModal = ({ open, ticketId, onClose, onTicketUpdated }) 
                     <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600 }}>
                       A new ticket has been assigned to you. Review it and take the next action.
                     </Typography>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" spacing={1} sx={{ ml: { sm: 'auto' } }}>
                       {canAssignWorker && (
                         <Button
                           variant={activeActionPanel === 'ASSIGN_WORKER' ? 'contained' : 'outlined'}
