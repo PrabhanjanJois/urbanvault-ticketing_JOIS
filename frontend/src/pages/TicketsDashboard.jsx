@@ -119,6 +119,21 @@ export const TicketsDashboard = () => {
     }
   }, [activeTab, page, ordering, searchQuery, filterClient, filterDepartment, filterStatus])
 
+  // Reset to Open tab, clear filters, and select first ticket when persona switches
+  const prevUserRef = React.useRef(user?.username)
+  useEffect(() => {
+    if (user?.username && user.username !== prevUserRef.current) {
+      prevUserRef.current = user.username
+      setActiveTab('open')
+      setPage(1)
+      setSearchQuery('')
+      setFilterClient('')
+      setFilterDepartment('')
+      setFilterStatus('')
+      setSelectedTicketId(null)
+    }
+  }, [user])
+
   // Trigger fetch on filter / user changes
   useEffect(() => {
     fetchTickets()
@@ -128,6 +143,7 @@ export const TicketsDashboard = () => {
   const handleFilterChange = (setter) => (e) => {
     setter(e.target.value)
     setPage(1)
+    setSelectedTicketId(null)
   }
 
   const handleClearFilters = () => {
@@ -221,6 +237,7 @@ export const TicketsDashboard = () => {
                 onChange={(e, val) => {
                   setActiveTab(val)
                   setPage(1)
+                  setSelectedTicketId(null)
                 }}
                 textColor="primary"
                 indicatorColor="primary"

@@ -656,35 +656,57 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
           {/* TECHNICIAN CTA BANNER */}
           {isTech && (
             <Stack spacing={2}>
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                justifyContent="space-between"
-                spacing={2}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  justifyContent: 'space-between',
+                  gap: 2,
+                  minHeight: 34,
+                }}
               >
-                <Stack direction="row" alignItems="center" spacing={1.2} flexWrap="wrap">
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <Chip
                     label="Action Required"
                     size="small"
                     sx={{
-                      height: 22,
-                      fontSize: '0.7rem',
+                      height: 24,
+                      fontSize: '0.725rem',
                       fontWeight: 700,
                       bgcolor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7',
                       color: isDark ? '#FBBF24' : '#B45309',
                       border: isDark ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid #FDE68A',
+                      borderRadius: 1.5,
+                      flexShrink: 0,
                     }}
                   />
-                  <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.85rem' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.primary',
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      lineHeight: '24px',
+                      m: 0,
+                    }}
+                  >
                     You have been assigned this ticket. Take action.
                   </Typography>
-                </Stack>
+                </Box>
 
                 {canSubmitAssessment && (
                   <Button
                     variant="contained"
                     size="small"
-                    startIcon={<BuildIcon sx={{ fontSize: 16 }} />}
+                    startIcon={<BuildIcon sx={{ fontSize: '1rem !important' }} />}
                     onClick={() =>
                       setActiveActionPanel(activeActionPanel === 'ASSESSMENT' ? null : 'ASSESSMENT')
                     }
@@ -695,22 +717,22 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                         bgcolor: isDark ? '#1D4ED8' : '#1E40AF',
                       },
                       px: 2,
-                      py: 0.6,
-                      height: 34,
+                      height: 32,
+                      minHeight: 32,
                       fontSize: '0.8125rem',
                       fontWeight: 600,
                       textTransform: 'none',
-                      borderRadius: 2,
-                      boxShadow: isDark
-                        ? '0 2px 10px rgba(37, 99, 235, 0.35)'
-                        : '0 2px 8px rgba(29, 78, 216, 0.25)',
+                      borderRadius: 1.5,
+                      boxShadow: 'none',
                       flexShrink: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
                     }}
                   >
                     Submit Assessment
                   </Button>
                 )}
-              </Stack>
+              </Box>
 
               {/* Expanded Submit Assessment Panel matching Wireframe Options */}
               {activeActionPanel === 'ASSESSMENT' && (
