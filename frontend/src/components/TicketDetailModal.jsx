@@ -34,7 +34,7 @@ import SendIcon from '@mui/icons-material/Send'
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd'
 import SwapCallsIcon from '@mui/icons-material/SwapCalls'
 import BuildIcon from '@mui/icons-material/Build'
-import { getStatusBadgeConfig } from './TicketCard'
+import { getStatusBadgeConfig } from '../utils/status'
 import { useAuth } from '../context/AuthContext'
 import client from '../api/client'
 
