@@ -674,32 +674,94 @@ export const TicketDetailPane = ({ ticketId, onTicketUpdated }) => {
                     flexWrap: 'wrap',
                   }}
                 >
-                  <Chip
-                    label="Action Required"
-                    size="small"
-                    sx={{
-                      height: 24,
-                      fontSize: '0.725rem',
-                      fontWeight: 700,
-                      bgcolor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7',
-                      color: isDark ? '#FBBF24' : '#B45309',
-                      border: isDark ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid #FDE68A',
-                      borderRadius: 1.5,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: 'text.primary',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
-                      lineHeight: '24px',
-                      m: 0,
-                    }}
-                  >
-                    You have been assigned this ticket. Take action.
-                  </Typography>
+                  {ticket.status === 'PENDING_TECHNICIAN_ASSIGNMENT' ? (
+                    <>
+                      <Chip
+                        label="Awaiting Assignment"
+                        size="small"
+                        sx={{
+                          height: 24,
+                          fontSize: '0.725rem',
+                          fontWeight: 700,
+                          bgcolor: isDark ? 'rgba(148, 163, 184, 0.15)' : '#F1F5F9',
+                          color: isDark ? '#94A3B8' : '#475569',
+                          border: isDark ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid #CBD5E1',
+                          borderRadius: 1.5,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'text.secondary',
+                          fontWeight: 500,
+                          fontSize: '0.875rem',
+                          lineHeight: '24px',
+                          m: 0,
+                        }}
+                      >
+                        Department Manager ({ticket.assigned_to_name || 'Technical Manager'}) is reviewing this ticket. Once assigned to you, action will be required.
+                      </Typography>
+                    </>
+                  ) : ticket.status === 'PENDING_DEPARTMENT_REVIEW' ? (
+                    <>
+                      <Chip
+                        label="Pending Review"
+                        size="small"
+                        sx={{
+                          height: 24,
+                          fontSize: '0.725rem',
+                          fontWeight: 700,
+                          bgcolor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2',
+                          color: isDark ? '#FCA5A5' : '#991B1B',
+                          border: isDark ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid #FECACA',
+                          borderRadius: 1.5,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'text.secondary',
+                          fontWeight: 500,
+                          fontSize: '0.875rem',
+                          lineHeight: '24px',
+                          m: 0,
+                        }}
+                      >
+                        Assessment submitted. Department Manager is currently reviewing required parts / approvals.
+                      </Typography>
+                    </>
+                  ) : canSubmitAssessment ? (
+                    <>
+                      <Chip
+                        label="Action Required"
+                        size="small"
+                        sx={{
+                          height: 24,
+                          fontSize: '0.725rem',
+                          fontWeight: 700,
+                          bgcolor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7',
+                          color: isDark ? '#FBBF24' : '#B45309',
+                          border: isDark ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid #FDE68A',
+                          borderRadius: 1.5,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'text.primary',
+                          fontWeight: 600,
+                          fontSize: '0.875rem',
+                          lineHeight: '24px',
+                          m: 0,
+                        }}
+                      >
+                        You have been assigned this ticket. Take action.
+                      </Typography>
+                    </>
+                  ) : null}
                 </Box>
 
                 {canSubmitAssessment && (

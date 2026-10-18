@@ -529,7 +529,11 @@ export const TicketDetailModal = ({ open, ticketId, onClose, onTicketUpdated }) 
                     spacing={1.5}
                   >
                     <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600 }}>
-                      You have been assigned this ticket. Take action.
+                      {ticket.status === 'PENDING_TECHNICIAN_ASSIGNMENT'
+                        ? `Department Manager (${ticket.assigned_to_name || 'Technical Manager'}) is reviewing this ticket. Once assigned to you, action will be required.`
+                        : ticket.status === 'PENDING_DEPARTMENT_REVIEW'
+                        ? 'Assessment submitted. Department Manager is currently reviewing required parts / approvals.'
+                        : 'You have been assigned this ticket. Take action.'}
                     </Typography>
                     {canSubmitAssessment && (
                       <Button
