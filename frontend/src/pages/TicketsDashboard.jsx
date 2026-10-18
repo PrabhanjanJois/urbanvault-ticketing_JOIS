@@ -317,18 +317,14 @@ export const TicketsDashboard = () => {
                   sx={{ fontSize: '0.8rem' }}
                 >
                   <MenuItem value="" sx={{ fontSize: '0.8rem' }}>All</MenuItem>
-                  {activeTab === 'open' ? (
-                    <>
-                      <MenuItem value="PENDING_TECHNICIAN_ASSIGNMENT" sx={{ fontSize: '0.75rem' }}>Pending Assignment</MenuItem>
-                      <MenuItem value="PENDING_TECHNICIAN_ASSESSMENT" sx={{ fontSize: '0.75rem' }}>Pending Assessment</MenuItem>
-                      <MenuItem value="PENDING_DEPARTMENT_REVIEW" sx={{ fontSize: '0.75rem' }}>Pending Review</MenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <MenuItem value="RESOLVED" sx={{ fontSize: '0.75rem' }}>Resolved</MenuItem>
-                      <MenuItem value="CLOSED" sx={{ fontSize: '0.75rem' }}>Closed</MenuItem>
-                    </>
-                  )}
+                  {activeTab === 'open' ? [
+                    <MenuItem key="PTA" value="PENDING_TECHNICIAN_ASSIGNMENT" sx={{ fontSize: '0.75rem' }}>Pending Assignment</MenuItem>,
+                    <MenuItem key="PTASS" value="PENDING_TECHNICIAN_ASSESSMENT" sx={{ fontSize: '0.75rem' }}>Pending Assessment</MenuItem>,
+                    <MenuItem key="PDR" value="PENDING_DEPARTMENT_REVIEW" sx={{ fontSize: '0.75rem' }}>Pending Review</MenuItem>,
+                  ] : [
+                    <MenuItem key="RES" value="RESOLVED" sx={{ fontSize: '0.75rem' }}>Resolved</MenuItem>,
+                    <MenuItem key="CLS" value="CLOSED" sx={{ fontSize: '0.75rem' }}>Closed</MenuItem>,
+                  ]}
                 </Select>
               </FormControl>
 
