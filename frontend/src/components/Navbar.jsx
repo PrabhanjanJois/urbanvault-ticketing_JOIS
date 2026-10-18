@@ -9,7 +9,6 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Stack,
   IconButton,
   Tooltip,
@@ -66,15 +65,15 @@ export const Navbar = () => {
         <Stack direction="row" alignItems="center" spacing={1.5}>
           <Box
             sx={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: 2,
               backgroundColor: isDark ? '#3B82F6' : '#0F172A',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#FFFFFF',
-              boxShadow: isDark ? '0 0 16px rgba(59, 130, 246, 0.4)' : 'none',
+              boxShadow: isDark ? '0 0 16px rgba(59, 130, 246, 0.35)' : 'none',
             }}
           >
             <BusinessIcon fontSize="small" />
@@ -89,42 +88,86 @@ export const Navbar = () => {
           </Box>
         </Stack>
 
-        {/* Right Section: Persona Switcher & Dark Mode Toggle */}
+        {/* Right Section: Single Clean Persona Switcher & Dark Mode Toggle */}
         <Stack direction="row" alignItems="center" spacing={1.5}>
-          {/* Persona Switcher Dropdown */}
-          <FormControl size="small" sx={{ minWidth: { xs: 180, sm: 260 } }}>
-            <InputLabel id="persona-switch-label" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
-              Active Persona (1-Click Switch)
-            </InputLabel>
+          {/* Persona Switcher Dropdown (No cut-off floating label, clean unified card style) */}
+          <FormControl size="small">
             <Select
-              labelId="persona-switch-label"
               value={user?.username || ''}
               onChange={handlePersonaChange}
-              label="Active Persona (1-Click Switch)"
               disabled={loading}
+              displayEmpty
               sx={{
-                borderRadius: 2,
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                bgcolor: isDark ? '#1E293B' : '#F8FAFC',
+                borderRadius: 2.5,
+                bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
+                border: `1px solid ${theme.palette.divider}`,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : '#94A3B8',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
                 '& .MuiSelect-select': {
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1,
-                  py: 0.8,
+                  py: 0.6,
+                  pr: 3.5,
                 },
+              }}
+              renderValue={(selected) => {
+                const active = personas.find((p) => p.username === selected) || user
+                if (!active) return 'Select Persona'
+                const badge = getRoleBadge(active.role)
+                return (
+                  <Stack direction="row" alignItems="center" spacing={1.2}>
+                    <Avatar
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        fontSize: '0.75rem',
+                        bgcolor: isDark ? '#3B82F6' : '#0F172A',
+                        color: '#FFFFFF',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {active.avatar_initials}
+                    </Avatar>
+                    <Box sx={{ textAlign: 'left', minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.2, color: 'text.primary', noWrap: true }}>
+                        {active.display_name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', display: 'block', noWrap: true }}>
+                        {active.title} {active.client_name ? `• ${active.client_name}` : active.department_name ? `• ${active.department_name}` : ''}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={badge.label}
+                      size="small"
+                      sx={{
+                        fontSize: '0.65rem',
+                        height: 20,
+                        bgcolor: badge.bg,
+                        color: badge.text,
+                        fontWeight: 700,
+                        ml: 0.5,
+                      }}
+                    />
+                  </Stack>
+                )
               }}
             >
               {personas.map((p) => {
                 const badge = getRoleBadge(p.role)
                 return (
-                  <MenuItem key={p.id} value={p.username} sx={{ py: 1 }}>
+                  <MenuItem key={p.id} value={p.username} sx={{ py: 1, px: 2 }}>
                     <Stack direction="row" alignItems="center" spacing={1.2} sx={{ width: '100%' }}>
                       <Avatar
                         sx={{
-                          width: 26,
-                          height: 26,
-                          fontSize: '0.7rem',
+                          width: 28,
+                          height: 28,
+                          fontSize: '0.75rem',
                           bgcolor: isDark ? '#3B82F6' : '#0F172A',
                           color: '#FFFFFF',
                           fontWeight: 700,
@@ -133,10 +176,10 @@ export const Navbar = () => {
                         {p.avatar_initials}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, noWrap: true, fontSize: '0.825rem' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, noWrap: true, fontSize: '0.85rem' }}>
                           {p.display_name}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', noWrap: true, fontSize: '0.7rem' }}>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', noWrap: true, fontSize: '0.725rem' }}>
                           {p.title} {p.client_name ? `• ${p.client_name}` : p.department_name ? `• ${p.department_name}` : ''}
                         </Typography>
                       </Box>
@@ -144,8 +187,8 @@ export const Navbar = () => {
                         label={badge.label}
                         size="small"
                         sx={{
-                          fontSize: '0.625rem',
-                          height: 18,
+                          fontSize: '0.65rem',
+                          height: 20,
                           bgcolor: badge.bg,
                           color: badge.text,
                           fontWeight: 700,
@@ -158,44 +201,6 @@ export const Navbar = () => {
             </Select>
           </FormControl>
 
-          {/* Active User Chip on desktop */}
-          {user && (
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{
-                p: 0.5,
-                pr: 1.5,
-                borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F1F5F9',
-                border: `1px solid ${theme.palette.divider}`,
-                display: { xs: 'none', md: 'flex' },
-              }}
-            >
-              <Avatar
-                sx={{
-                  width: 28,
-                  height: 28,
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  bgcolor: isDark ? '#3B82F6' : '#0F172A',
-                  color: '#FFFFFF',
-                }}
-              >
-                {user.avatar_initials}
-              </Avatar>
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 700, lineHeight: 1.1, display: 'block', color: 'text.primary' }}>
-                  {user.display_name}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.675rem', fontWeight: 600 }}>
-                  {getRoleBadge(user.role).label}
-                </Typography>
-              </Box>
-            </Stack>
-          )}
-
           {/* Dark / Light Mode Toggle Button */}
           <Tooltip title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
             <IconButton
@@ -205,10 +210,10 @@ export const Navbar = () => {
                 p: 1,
                 borderRadius: 2,
                 border: `1px solid ${theme.palette.divider}`,
-                bgcolor: isDark ? '#1E293B' : '#F8FAFC',
+                bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
                 color: isDark ? '#FBBF24' : '#475569',
                 '&:hover': {
-                  bgcolor: isDark ? '#334155' : '#E2E8F0',
+                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E2E8F0',
                 },
               }}
             >
